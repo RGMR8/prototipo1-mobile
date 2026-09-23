@@ -1,0 +1,36 @@
+{
+  "screenId": "home",
+  "title": "Pantalla de prueba",
+  "components": [
+    {
+      "type": "Container",
+      "id": "card-1",
+      "style": {
+        "padding": 16,
+        "backgroundColor": "#F5F5F5",
+        "borderRadius": 8,
+        "gap": 8
+      },
+      "children": [
+        {
+          "type": "Text",
+          "id": "title-1",
+          "content": "Bienvenido",
+          "style": { "fontSize": 20, "fontWeight": "bold" }
+        },
+        {
+          "type": "Text",
+          "id": "subtitle-1",
+          "content": "Este texto y este botón vienen del JSON del backend o como severia por el backend, no están hardcodeados en la app.",
+          "style": { "fontSize": 14, "color": "#555555" }
+        },
+        {
+          "type": "Button",
+          "id": "btn-1",
+          "label": "Continuar",
+          "style": { "backgroundColor": "#0B5FA5", "color": "#FFFFFF", "padding": 10, "borderRadius": 6 }
+        }
+      ]
+    }
+  ]
+}
