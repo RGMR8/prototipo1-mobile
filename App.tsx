@@ -1,52 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, Text, StyleSheet } from 'react-native';
+import { BackHandler, ScrollView, Text, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { fetchScreen } from './src/api/client';
-import { parseScreen, ScreenParseError } from './src/parser/parseScreen';
 import { ScreenRenderer } from './src/components/ScreenRenderer';
-import type { ScreenDefinition } from './src/types/screen';
-import exampleScreen from './src/mocks/exampleScreen.json';
+import { NavigationContext } from './src/navigation/NavigationContext';
+import { useScreen } from './src/hooks/useScreen';
+import { theme } from './src/theme/theme';
+import { messages } from './src/i18n/messages';
 
-/**
- * USE_MOCK=true mientras el endpoint real del backend no esté listo.
- * Cuando exista, cambiar a false para pedir la pantalla real vía
- * fetchScreen(). No se agrega manejo de errores de red aquí — eso es
- * explícitamente alcance del Prototipo #4.
- */
-const USE_MOCK = false;
+const INITIAL_SCREEN = 'home';
 
 export default function App() {
-  const [screen, setScreen] = useState<ScreenDefinition | null>(null);
+  // Stack de navegación: la última entrada es la pantalla visible.
+  const [stack, setStack] = useState<string[]>([INITIAL_SCREEN]);
+  const currentScreenId = stack[stack.length - 1];
+  const screen = useScreen(currentScreenId);
 
-  useEffect(() => {
-    const raw = USE_MOCK ? exampleScreen : fetchScreen('home');
-
-    Promise.resolve(raw).then((data) => {
-      try {
-        setScreen(parseScreen(data));
-      } catch (error) {
-        if (error instanceof ScreenParseError) {
-          // Log simple durante el prototipo — sin UI de error todavía
-          // (Prototipo #4: "Pantalla de error global").
-          console.error('Error al parsear la pantalla:', error.message);
-        }
-        throw error;
-      }
-    });
+  const navigate = useCallback((screenId: string) => {
+    setStack((prev) => [...prev, screenId]);
   }, []);
 
+  // Botón "atrás" físico de Android. En web es un no-op.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (stack.length <= 1) return false; // en la primera pantalla, Android cierra la app
+      setStack((prev) => prev.slice(0, -1));
+      return true;
+    });
+    return () => subscription.remove();
+  }, [stack.length]);
+
+  const navigation = useMemo(() => ({ navigate }), [navigate]);
+
   return (
-    // SafeAreaProvider debe envolver la app una sola vez, en la raíz —
-    // es lo que le da a SafeAreaView los datos reales del dispositivo
-    // (notch, barra de estado, gestos) para calcular el margen seguro.
     <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="auto" />
-        <ScrollView contentContainerStyle={styles.content}>
-          {screen ? <ScreenRenderer screen={screen} /> : <Text>Cargando...</Text>}
-        </ScrollView>
-      </SafeAreaView>
+      <NavigationContext.Provider value={navigation}>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="auto" />
+          <ScrollView contentContainerStyle={styles.content}>
+            {screen ? <ScreenRenderer screen={screen} /> : <Text>{messages.common.loading}</Text>}
+          </ScrollView>
+        </SafeAreaView>
+      </NavigationContext.Provider>
     </SafeAreaProvider>
   );
 }
@@ -54,9 +49,9 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: theme.spacing.lg,
   },
 });

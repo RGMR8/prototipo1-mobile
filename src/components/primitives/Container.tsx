@@ -1,19 +1,24 @@
-import { View } from 'react-native';
-import type { ContainerComponent, ScreenComponent } from '../../types/screen';
+import { View, StyleSheet } from 'react-native';
+import type { ContainerComponent, RenderChild } from '../../types/screen';
 import { mapStyle } from '../mapStyle';
 
 interface Props extends ContainerComponent {
-  // Se recibe como prop en vez de importarse directamente — así Container
-  // ya no depende de renderComponent.tsx, y el ciclo desaparece.
-  renderChild: (props: { component: ScreenComponent }) => React.JSX.Element;
+  renderChild: RenderChild;
 }
 
 export function Container({ children, style, renderChild: RenderChild }: Props) {
   return (
-    <View style={[{ flexDirection: 'column' }, mapStyle(style)]}>
+    <View style={[styles.container, mapStyle(style)]}>
       {children.map((child) => (
         <RenderChild key={child.id} component={child} />
       ))}
     </View>
   );
 }
+
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'column',
+  },
+});

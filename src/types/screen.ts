@@ -1,18 +1,16 @@
 /**
- * Tipos para el screen-builder — Prototipo #1
+ * Tipos para el screen-builder.
  *
- * Alcance de este prototipo (según Plan de acción | Prototipado):
- * - Componentes: Text, Container, Button
- * - Estilos básicos definidos desde la app (NO personalización desde la API todavía — eso es Prototipo #5)
- * - Sin acciones (navigate/submit llegan en el Prototipo #2)
- * - Sin forms (Prototipo #2)
+ * Prototipo #1: Text, Container, Button, estilos básicos.
+ * Prototipo #2: Form, FormGroup, Input (text, password), Select,
+ *               acciones NAVIGATE y SUBMIT.
+ * Personalización de estilos desde la API: Prototipo #5 en espera.
  */
 
 /**
  * Propiedades de estilo que la API puede especificar por componente.
- * Es un subconjunto deliberadamente pequeño: el Prototipo #1 solo valida
- * que el flujo JSON → componente → estilo funcione, no busca cubrir
- * cada propiedad CSS posible.
+ * Subconjunto deliberadamente pequeño: no busca cubrir cada propiedad
+ * CSS posible.
  */
 export interface ComponentStyle {
   color?: string;
@@ -35,6 +33,11 @@ interface BaseComponent {
   style?: ComponentStyle;
 }
 
+/** Acciones que un componente puede ejecutar. Unión discriminada por `type`. */
+export type ScreenAction =
+  | { type: 'NAVIGATE'; screenId: string }
+  | { type: 'SUBMIT'; method: string };
+
 export interface TextComponent extends BaseComponent {
   type: 'Text';
   content: string;
@@ -43,6 +46,7 @@ export interface TextComponent extends BaseComponent {
 export interface ButtonComponent extends BaseComponent {
   type: 'Button';
   label: string;
+  action?: ScreenAction;
 }
 
 export interface ContainerComponent extends BaseComponent {
@@ -50,8 +54,49 @@ export interface ContainerComponent extends BaseComponent {
   children: ScreenComponent[];
 }
 
+export interface FormComponent extends BaseComponent {
+  type: 'Form';
+  children: ScreenComponent[];
+}
+
+export interface FormGroupComponent extends BaseComponent {
+  type: 'FormGroup';
+  label?: string;
+  children: ScreenComponent[];
+}
+
+export interface InputComponent extends BaseComponent {
+  type: 'Input';
+  name: string;
+  inputType: 'text' | 'password';
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface SelectComponent extends BaseComponent {
+  type: 'Select';
+  name: string;
+  label: string;
+  options: SelectOption[];
+  required?: boolean;
+  placeholder?: string;
+}
+
 /** Unión discriminada por `type` — así TypeScript sabe qué campos esperar en cada caso. */
-export type ScreenComponent = TextComponent | ButtonComponent | ContainerComponent;
+export type ScreenComponent =
+  | TextComponent
+  | ButtonComponent
+  | ContainerComponent
+  | FormComponent
+  | FormGroupComponent
+  | InputComponent
+  | SelectComponent;
 
 /** Estructura completa de una pantalla, tal como la manda el backend. */
 export interface ScreenDefinition {
@@ -59,3 +104,15 @@ export interface ScreenDefinition {
   title: string;
   components: ScreenComponent[];
 }
+
+/** Respuesta del backend a un SUBMIT: el servidor decide qué sigue. */
+export interface SubmitResponse {
+  action: ScreenAction;
+}
+
+/**
+ * Función que renderiza un hijo. La reciben los componentes contenedores
+ * (Container, Form, FormGroup) como prop, en vez de importar
+ * renderComponent directamente: así se evita el ciclo de imports.
+ */
+export type RenderChild = (props: { component: ScreenComponent }) => React.JSX.Element;
