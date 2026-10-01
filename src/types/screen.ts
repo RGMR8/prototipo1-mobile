@@ -36,7 +36,8 @@ interface BaseComponent {
 /** Acciones que un componente puede ejecutar. Unión discriminada por `type`. */
 export type ScreenAction =
   | { type: 'NAVIGATE'; screenId: string }
-  | { type: 'SUBMIT'; method: string };
+  | { type: 'SUBMIT'; method: string }
+  | { type: 'CALL'; function: string };
 
 export interface TextComponent extends BaseComponent {
   type: 'Text';
@@ -116,3 +117,4 @@ export interface SubmitResponse {
  * renderComponent directamente: así se evita el ciclo de imports.
  */
 export type RenderChild = (props: { component: ScreenComponent }) => React.JSX.Element;
+

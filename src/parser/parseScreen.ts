@@ -6,6 +6,7 @@ import type {
   SelectOption,
   SubmitResponse,
 } from '../types/screen';
+import { isRegisteredFunction } from '../actions/functionRegistry';
 
 /**
  * Error de parseo. Se define esta clase mínima (no un sistema de manejo
@@ -93,7 +94,15 @@ function parseAction(raw: unknown, path: string, ctx: ParseContext): ScreenActio
     return { type: 'SUBMIT', method: requireString(raw, 'method', 'SUBMIT', path) };
   }
 
-  throw new ScreenParseError('"action.type" debe ser NAVIGATE o SUBMIT', path);
+  if (raw.type === 'CALL') {
+    const fn = requireString(raw, 'function', 'CALL', path);
+    if (!isRegisteredFunction(fn)) {
+      throw new ScreenParseError(`La función "${fn}" no está registrada en la app`, path);
+    }
+    return { type: 'CALL', function: fn };
+  }
+
+  throw new ScreenParseError('"action.type" debe ser NAVIGATE, SUBMIT o CALL', path);
 }
 
 /** Registra el `name` de un campo en su Form. Falla si está fuera de un Form o si se repite. */

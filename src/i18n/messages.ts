@@ -15,4 +15,8 @@ export const messages = {
     invalidOption: 'Opción no válida',
     selectPlaceholder: 'Selecciona una opción',
   },
+  functions: {
+    testTitle: 'Función de prueba',
+    testMessage: 'Esta función está escrita en React y la ejecutó el backend desde el JSON.',
+  },
 } as const;

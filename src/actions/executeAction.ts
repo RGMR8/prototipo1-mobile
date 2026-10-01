@@ -2,6 +2,7 @@ import type { ScreenAction } from '../types/screen';
 import type { FormContextValue } from '../components/form/FormContext';
 import { submitForm } from '../api/client';
 import { parseSubmitResponse } from '../parser/parseScreen';
+import { getRegisteredFunction } from './functionRegistry';
 
 export interface ActionDeps {
   navigate: (screenId: string) => void;
@@ -27,6 +28,12 @@ export async function executeAction(action: ScreenAction, deps: ActionDeps): Pro
     const response = parseSubmitResponse(raw);
     // El servidor decide qué sigue (el parser solo permite NAVIGATE).
     await executeAction(response.action, deps);
+    return;
+  }
+
+  if (action.type === 'CALL') {
+    const fn = getRegisteredFunction(action.function);
+    await fn();
     return;
   }
 
