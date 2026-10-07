@@ -26,7 +26,7 @@ export async function executeAction(action: ScreenAction, deps: ActionDeps): Pro
 
     const raw = await submitForm(action.method, deps.form.values);
     const response = parseSubmitResponse(raw);
-    // El servidor decide qué sigue (el parser solo permite NAVIGATE).
+        // El servidor decide qué sigue (el parser solo permite NAVIGATE o CALL).
     await executeAction(response.action, deps);
     return;
   }

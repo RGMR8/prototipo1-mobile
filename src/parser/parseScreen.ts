@@ -281,7 +281,7 @@ export function parseScreen(raw: unknown): ScreenDefinition {
 /**
  * Valida la respuesta del backend a un SUBMIT. Se parsea con contexto
  * fuera de Form, así que una respuesta que intente encadenar otro SUBMIT
- * se rechaza: el servidor solo puede responder con NAVIGATE.
+ * se rechaza: el servidor solo puede responder con NAVIGATE o CALL.
  */
 export function parseSubmitResponse(raw: unknown): SubmitResponse {
   if (!isPlainObject(raw)) {

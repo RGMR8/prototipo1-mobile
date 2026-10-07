@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import type { FormComponent, ScreenComponent,ContainerComponent, RenderChild } from '../../types/screen';
+import type { FormComponent,RenderChild } from '../../types/screen';
 import { mapStyle } from '../mapStyle';
 import { FormContext } from './FormContext';
 import { collectFields, validateFields } from './formValidation';

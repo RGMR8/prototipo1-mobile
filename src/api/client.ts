@@ -2,7 +2,10 @@
  * API client — Prototipo #1 y 2
  */
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+if (!API_BASE_URL) {
+  throw new Error('Falta EXPO_PUBLIC_API_BASE_URL en el .env');
+}
 
 export async function fetchScreen(screenId: string): Promise<unknown> {
   const response = await fetch(
