@@ -14,7 +14,7 @@ import { theme } from '../../theme/theme';
  * Antes se pasaba el mismo style a ambos y el padding se duplicaba.
  */
 export function Button({ label, style, action }: ButtonComponent) {
-  const { navigate } = useNavigation();
+  const { navigate, resetTo } = useNavigation();
   const form = useOptionalFormContext();
   const [busy, setBusy] = useState(false);
 
@@ -24,7 +24,7 @@ export function Button({ label, style, action }: ButtonComponent) {
     if (!action || busy) return;
     setBusy(true);
     try {
-      await executeAction(action, { navigate, form });
+      await executeAction(action, { navigate, resetTo, form });
     } finally {
       setBusy(false);
     }

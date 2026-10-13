@@ -6,6 +6,8 @@ export interface FormContextValue {
   setValue: (name: string, value: string) => void;
   /** Valida todo el form, pinta los errores y devuelve si es válido. */
   validate: () => boolean;
+    /** Pinta errores devueltos por el servidor (ej. credenciales inválidas). */
+  setServerErrors: (errors: Record<string, string>) => void;
 }
 
 export const FormContext = createContext<FormContextValue | null>(null);

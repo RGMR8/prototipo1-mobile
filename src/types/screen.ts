@@ -35,9 +35,10 @@ interface BaseComponent {
 
 /** Acciones que un componente puede ejecutar. Unión discriminada por `type`. */
 export type ScreenAction =
-  | { type: 'NAVIGATE'; screenId: string }
+  | { type: 'NAVIGATE'; screenId: string; reset?: boolean }
   | { type: 'SUBMIT'; method: string }
-  | { type: 'CALL'; function: string };
+  | { type: 'CALL'; function: string }
+  | { type: 'LOGOUT' };
 
 export interface TextComponent extends BaseComponent {
   type: 'Text';
@@ -107,8 +108,17 @@ export interface ScreenDefinition {
 }
 
 /** Respuesta del backend a un SUBMIT: el servidor decide qué sigue. */
+/**
+ * Respuesta del backend a un SUBMIT (o al logout). Trae al menos
+ * `action` o `errors`:
+ * - session: el servidor abre sesión (login) → la app guarda el token.
+ * - errors:  errores por campo → el Form los pinta y no se navega.
+ * - action:  qué hacer después (el servidor decide).
+ */
 export interface SubmitResponse {
-  action: ScreenAction;
+  action?: ScreenAction;
+  session?: { token: string };
+  errors?: Record<string, string>;
 }
 
 /**

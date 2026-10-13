@@ -7,7 +7,12 @@ import type { ScreenDefinition } from '../types/screen';
  * Carga y parsea una pantalla del backend. Sin caché (excluido del #2):
  * volver a una pantalla la pide de nuevo.
  */
-export function useScreen(screenId: string): ScreenDefinition | null {
+/**
+ * `key` identifica cada entrada del historial: si se navega de nuevo a la
+ * misma pantalla (ej. reset a 'home' después del login), cambia la key y la
+ * pantalla se vuelve a pedir aunque el screenId sea el mismo.
+ */
+export function useScreen(screenId: string, key: number): ScreenDefinition | null {
   const [screen, setScreen] = useState<ScreenDefinition | null>(null);
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export function useScreen(screenId: string): ScreenDefinition | null {
     return () => {
       cancelled = true;
     };
-  }, [screenId]);
+  },[screenId, key]);
 
   return screen;
 }

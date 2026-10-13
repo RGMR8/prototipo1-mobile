@@ -34,7 +34,14 @@ export function Form({ children, style, renderChild: RenderChild }: Props) {
     return Object.keys(next).length === 0;
   }, [fields, values]);
 
-  const ctx = useMemo(() => ({ values, errors, setValue, validate }), [values, errors, setValue, validate]);
+    const setServerErrors = useCallback((serverErrors: Record<string, string>) => {
+    setErrors(serverErrors);
+  }, []);
+
+  const ctx = useMemo(
+    () => ({ values, errors, setValue, validate, setServerErrors }),
+    [values, errors, setValue, validate, setServerErrors]
+  );
 
   return (
     <FormContext.Provider value={ctx}>

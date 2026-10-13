@@ -84,7 +84,11 @@ function parseAction(raw: unknown, path: string, ctx: ParseContext): ScreenActio
   }
 
   if (raw.type === 'NAVIGATE') {
-    return { type: 'NAVIGATE', screenId: requireString(raw, 'screenId', 'NAVIGATE', path) };
+    return {
+      type: 'NAVIGATE',
+      screenId: requireString(raw, 'screenId', 'NAVIGATE', path),
+      reset: optionalBoolean(raw, 'reset', path),
+    };
   }
 
   if (raw.type === 'SUBMIT') {
@@ -102,7 +106,11 @@ function parseAction(raw: unknown, path: string, ctx: ParseContext): ScreenActio
     return { type: 'CALL', function: fn };
   }
 
-  throw new ScreenParseError('"action.type" debe ser NAVIGATE, SUBMIT o CALL', path);
+  if (raw.type === 'LOGOUT') {
+    return { type: 'LOGOUT' };
+  }
+
+  throw new ScreenParseError('"action.type" debe ser NAVIGATE, SUBMIT, CALL o LOGOUT', path);
 }
 
 /** Registra el `name` de un campo en su Form. Falla si está fuera de un Form o si se repite. */
@@ -278,18 +286,44 @@ export function parseScreen(raw: unknown): ScreenDefinition {
   };
 }
 
+function parseErrors(raw: unknown, path: string): Record<string, string> | undefined {
+  if (raw === undefined) return undefined;
+  if (!isPlainObject(raw)) {
+    throw new ScreenParseError('"errors" debe ser un objeto { campo: mensaje }', path);
+  }
+  const errors: Record<string, string> = {};
+  for (const [field, message] of Object.entries(raw)) {
+    if (typeof message !== 'string') {
+      throw new ScreenParseError(`El error de "${field}" debe ser string`, path);
+    }
+    errors[field] = message;
+  }
+  return errors;
+}
+
+function parseSession(raw: unknown, path: string): { token: string } | undefined {
+  if (raw === undefined) return undefined;
+  if (!isPlainObject(raw)) {
+    throw new ScreenParseError('"session" debe ser un objeto', path);
+  }
+  return { token: requireString(raw, 'token', 'session', path) };
+}
+
 /**
- * Valida la respuesta del backend a un SUBMIT. Se parsea con contexto
- * fuera de Form, así que una respuesta que intente encadenar otro SUBMIT
- * se rechaza: el servidor solo puede responder con NAVIGATE o CALL.
+ * Valida la respuesta del backend a un SUBMIT o al logout. Se parsea con
+ * contexto fuera de Form, así que una respuesta que intente encadenar otro
+ * SUBMIT se rechaza. Debe traer al menos `action` o `errors`.
  */
 export function parseSubmitResponse(raw: unknown): SubmitResponse {
   if (!isPlainObject(raw)) {
     throw new ScreenParseError('La respuesta del SUBMIT debe ser un objeto', 'response');
   }
   const action = parseAction(raw.action, 'response.action', { formNames: null });
-  if (action === undefined) {
-    throw new ScreenParseError('Falta "action" en la respuesta del SUBMIT', 'response');
+  const errors = parseErrors(raw.errors, 'response.errors');
+  const session = parseSession(raw.session, 'response.session');
+
+  if (action === undefined && errors === undefined) {
+    throw new ScreenParseError('La respuesta debe traer "action" o "errors"', 'response');
   }
-  return { action };
+  return { action, errors, session };
 }
