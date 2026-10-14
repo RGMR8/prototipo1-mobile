@@ -32,5 +32,6 @@ export function Input({ name, inputType, label, placeholder, required, style }: 
 const styles = StyleSheet.create({
   input: {
     fontSize: theme.fontSize.body,
+    color: theme.colors.text,
   },
 });
