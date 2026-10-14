@@ -14,7 +14,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://facturacion.ivitec.mx/api/base_movil/"
+        "EXPO_PUBLIC_API_BASE_URL": "https://facturacion.ivitec.mx"
       }
     },
     "production": {
