@@ -42,10 +42,15 @@ export async function executeAction(action: ScreenAction, deps: ActionDeps): Pro
   }
 
   if (action.type === 'LOGOUT') {
-    const raw = await callMethod('logout');
-    // El token se borra del dispositivo pase lo que pase con la respuesta:
-    // el cierre de sesión local nunca depende del servidor.
-    await clearToken();
+    let raw: unknown;
+    try {
+      raw = await callMethod('logout');
+    } finally {
+      // Se borra aunque la petición falle: el cierre de sesión local nunca
+      // depende del servidor. Va después de callMethod porque el backend
+      // necesita el token en el header para revocarlo.
+      await clearToken();
+    }
     await applyResponse(parseSubmitResponse(raw), deps);
     return;
   }
