@@ -5,6 +5,7 @@ import { mapStyle } from '../mapStyle';
 import { executeAction } from '../../actions/executeAction';
 import { useNavigation } from '../../navigation/NavigationContext';
 import { useOptionalFormContext } from '../form/FormContext';
+import { handleActionError } from '../../errors/handleActionError';
 import { theme } from '../../theme/theme';
 
 /**
@@ -25,6 +26,8 @@ export function Button({ label, style, action }: ButtonComponent) {
     setBusy(true);
     try {
       await executeAction(action, { navigate, resetTo, form });
+    } catch (error) {
+      await handleActionError(error, resetTo);
     } finally {
       setBusy(false);
     }

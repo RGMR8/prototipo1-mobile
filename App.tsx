@@ -3,41 +3,54 @@ import { StatusBar } from 'expo-status-bar';
 import { BackHandler, ScrollView, Text, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenRenderer } from './src/components/ScreenRenderer';
+import { ErrorScreen } from './src/components/ErrorScreen';
 import { NavigationContext } from './src/navigation/NavigationContext';
+import { INITIAL_SCREEN_ID, LOGIN_SCREEN_ID } from './src/navigation/constants';
 import { useScreen } from './src/hooks/useScreen';
+import { ApiError } from './src/api/apiError';
+import { clearToken } from './src/session/tokenStorage';
+import { errorMessage } from './src/errors/errorMessage';
 import { theme } from './src/theme/theme';
 import { messages } from './src/i18n/messages';
 
-const INITIAL_SCREEN = 'home';
-
 /**
  * Entrada del historial. `key` es único por navegación: distingue dos visitas
- * a la misma pantalla (ej. 'home' mostrando el login y luego 'home' ya con
- * sesión) para que se vuelva a pedir al backend y se monte desde cero.
+ * a la misma pantalla para que se vuelva a pedir y se monte desde cero.
  */
 interface StackEntry {
   screenId: string;
   key: number;
 }
 
+function isUnauthorized(error: unknown): boolean {
+  return error instanceof ApiError && error.isUnauthorized;
+}
+
 export default function App() {
   const nextKey = useRef(1);
 
   // Stack de navegación: la última entrada es la pantalla visible.
-  const [stack, setStack] = useState<StackEntry[]>([{ screenId: INITIAL_SCREEN, key: 0 }]);
+  const [stack, setStack] = useState<StackEntry[]>([{ screenId: INITIAL_SCREEN_ID, key: 0 }]);
   const current = stack[stack.length - 1];
-  const screen = useScreen(current.screenId, current.key);
+  const { state, retry } = useScreen(current.screenId, current.key);
 
   const navigate = useCallback((screenId: string) => {
     const entry = { screenId, key: nextKey.current++ };
     setStack((prev) => [...prev, entry]);
   }, []);
 
-  // Login / logout: se descarta el historial para que "atrás" no regrese
-  // a una pantalla de la sesión anterior.
+  // Login / logout / sesión expirada: se descarta el historial para que
+  // "atrás" no regrese a una pantalla de la sesión anterior.
   const resetTo = useCallback((screenId: string) => {
     setStack([{ screenId, key: nextKey.current++ }]);
   }, []);
+
+  // 401 al pedir una pantalla: la sesión ya no sirve → borrar token e ir a login.
+  useEffect(() => {
+    if (state.status !== 'error') return;
+    if (!isUnauthorized(state.error)) return;
+    clearToken().then(() => resetTo(LOGIN_SCREEN_ID));
+  }, [state, resetTo]);
 
   // Botón "atrás" físico de Android. En web es un no-op.
   useEffect(() => {
@@ -56,13 +69,24 @@ export default function App() {
       <NavigationContext.Provider value={navigation}>
         <SafeAreaView style={styles.safeArea}>
           <StatusBar style="auto" />
-            <ScrollView contentContainerStyle={styles.content}>
-            {screen ? <ScreenRenderer key={current.key} screen={screen} /> : <Text>{messages.common.loading}</Text>}
+          <ScrollView contentContainerStyle={styles.content}>
+            {renderState()}
           </ScrollView>
         </SafeAreaView>
       </NavigationContext.Provider>
     </SafeAreaProvider>
   );
+
+  function renderState() {
+    if (state.status === 'ready') {
+      return <ScreenRenderer key={current.key} screen={state.screen} />;
+    }
+    // Un 401 se resuelve solo (va a login): mientras, se muestra "Cargando".
+    if (state.status === 'error' && !isUnauthorized(state.error)) {
+      return <ErrorScreen message={errorMessage(state.error)} onRetry={retry} />;
+    }
+    return <Text>{messages.common.loading}</Text>;
+  }
 }
 
 const styles = StyleSheet.create({

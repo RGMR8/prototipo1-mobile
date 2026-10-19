@@ -4,6 +4,7 @@ import { callMethod, submitForm } from '../api/client';
 import { parseSubmitResponse } from '../parser/parseScreen';
 import { getRegisteredFunction } from './functionRegistry';
 import { clearToken, saveToken } from '../session/tokenStorage';
+import { LOGIN_SCREEN_ID } from '../navigation/constants';
 
 export interface ActionDeps {
   navigate: (screenId: string) => void;
@@ -41,17 +42,18 @@ export async function executeAction(action: ScreenAction, deps: ActionDeps): Pro
     return;
   }
 
-  if (action.type === 'LOGOUT') {
-    let raw: unknown;
+    if (action.type === 'LOGOUT') {
     try {
-      raw = await callMethod('logout');
-    } finally {
-      // Se borra aunque la petición falle: el cierre de sesión local nunca
-      // depende del servidor. Va después de callMethod porque el backend
-      // necesita el token en el header para revocarlo.
+      // Primero el backend: necesita el token en el header para revocarlo.
+      const raw = await callMethod('logout');
       await clearToken();
+      await applyResponse(parseSubmitResponse(raw), deps);
+    } catch {
+      // Sin red o error del servidor: el cierre local se completa igual.
+      // El token del servidor no queda revocado, pero vence solo (8 h).
+      await clearToken();
+      deps.resetTo(LOGIN_SCREEN_ID);
     }
-    await applyResponse(parseSubmitResponse(raw), deps);
     return;
   }
 

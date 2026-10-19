@@ -1,4 +1,4 @@
-import { Alert, Platform } from 'react-native';
+import { showAlert } from '../ui/showAlert';
 import { messages } from '../i18n/messages';
 
 /**
@@ -12,15 +12,6 @@ import { messages } from '../i18n/messages';
  * Futuras: guarda_local (SQLite), sincroniza_servidor.
  */
 export type AppFunction = () => void | Promise<void>;
-
-/** Alert.alert no está implementado en web (react-native-web): se usa window.alert. */
-function showAlert(title: string, message: string): void {
-  if (Platform.OS === 'web') {
-    window.alert(`${title}\n\n${message}`);
-    return;
-  }
-  Alert.alert(title, message);
-}
 
 function funcionPrueba(): void {
   showAlert(messages.functions.testTitle, messages.functions.testMessage);

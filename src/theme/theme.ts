@@ -13,10 +13,13 @@ export const colors = {
   background: '#FFFFFF',
   surface: '#FFFFFF',
   text: '#000000',
+  textSecondary: '#555555',
   placeholder: '#999999',
   border: '#CCCCCC',
   divider: '#EEEEEE',
   error: '#D32F2F',
+  primary: '#22A45D',
+  onPrimary: '#FFFFFF',
   overlay: 'rgba(0, 0, 0, 0.4)',
 } as const;
 
