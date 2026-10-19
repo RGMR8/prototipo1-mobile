@@ -31,5 +31,6 @@ export const messages = {
     http404: 'No encontramos lo que buscabas.',
     http500: 'Ocurrió un error en el servidor. Inténtalo más tarde.',
     unknown: 'Ocurrió un error inesperado.',
+    render: 'No se pudo mostrar esta pantalla.',
   },
 } as const;

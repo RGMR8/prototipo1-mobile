@@ -4,6 +4,7 @@ import { BackHandler, ScrollView, Text, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenRenderer } from './src/components/ScreenRenderer';
 import { ErrorScreen } from './src/components/ErrorScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { NavigationContext } from './src/navigation/NavigationContext';
 import { INITIAL_SCREEN_ID, LOGIN_SCREEN_ID } from './src/navigation/constants';
 import { useScreen } from './src/hooks/useScreen';
@@ -79,7 +80,16 @@ export default function App() {
 
   function renderState() {
     if (state.status === 'ready') {
-      return <ScreenRenderer key={current.key} screen={state.screen} />;
+      // La key va en el boundary: al cambiar de pantalla se monta limpio,
+      // sin arrastrar el error de la anterior, y con él el ScreenRenderer.
+      return (
+        <ErrorBoundary
+          key={current.key}
+          fallback={<ErrorScreen message={messages.errors.render} onRetry={retry} />}
+        >
+          <ScreenRenderer screen={state.screen} />
+        </ErrorBoundary>
+      );
     }
     // Un 401 se resuelve solo (va a login): mientras, se muestra "Cargando".
     if (state.status === 'error' && !isUnauthorized(state.error)) {
