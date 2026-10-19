@@ -98,7 +98,8 @@ export type ScreenComponent =
   | FormComponent
   | FormGroupComponent
   | InputComponent
-  | SelectComponent;
+  | SelectComponent
+  | UnknownComponent;
 
 /** Estructura completa de una pantalla, tal como la manda el backend. */
 export interface ScreenDefinition {
@@ -127,4 +128,16 @@ export interface SubmitResponse {
  * renderComponent directamente: así se evita el ciclo de imports.
  */
 export type RenderChild = (props: { component: ScreenComponent }) => React.JSX.Element;
+
+/**
+ * Componente que esta versión de la app no conoce (#4).
+ * No viene así del backend: lo crea el parser cuando recibe un `type`
+ * que no está en su vocabulario, para dibujar un fallback en su lugar.
+ */
+export interface UnknownComponent {
+  type: 'Unknown';
+  id: string;
+  /** El type que mandó el backend, para el aviso y el diagnóstico. */
+  originalType: string;
+}
 

@@ -25,7 +25,19 @@ const VALID_COMPONENT_TYPES = [
   'Text', 'Container', 'Button', 'Form', 'FormGroup', 'Input', 'Select',
 ] as const;
 
+type KnownComponentType = (typeof VALID_COMPONENT_TYPES)[number];
+
+function isKnownComponentType(value: string): value is KnownComponentType {
+  return (VALID_COMPONENT_TYPES as readonly string[]).includes(value);
+}
+
 const VALID_INPUT_TYPES = ['text', 'password'] as const;
+
+type InputType = (typeof VALID_INPUT_TYPES)[number];
+
+function isInputType(value: string): value is InputType {
+  return (VALID_INPUT_TYPES as readonly string[]).includes(value);
+}
 
 /**
  * Contexto que viaja por el árbol durante el parseo.
@@ -165,11 +177,16 @@ function parseComponent(raw: unknown, path: string, ctx: ParseContext): ScreenCo
     throw new ScreenParseError('Falta "id" (string) en el componente', path);
   }
 
-  if (typeof type !== 'string' || !VALID_COMPONENT_TYPES.includes(type as any)) {
-    throw new ScreenParseError(
-      `"type" debe ser uno de: ${VALID_COMPONENT_TYPES.join(', ')}`,
-      path
-    );
+  if (typeof type !== 'string' || type.trim() === '') {
+    throw new ScreenParseError('Falta "type" (string) en el componente', path);
+  }
+
+  // #4: un tipo que esta versión de la app no conoce no tumba la pantalla.
+  // Se marca como Unknown y el dispatcher dibuja un fallback en su lugar.
+  // Pasa, por ejemplo, cuando el backend ya usa un componente nuevo y el
+  // APK instalado es anterior.
+  if (!isKnownComponentType(type)) {
+    return { type: 'Unknown', id, originalType: type };
   }
 
   const style = parseStyle(raw.style, `${path}.style`);
@@ -215,7 +232,7 @@ function parseComponent(raw: unknown, path: string, ctx: ParseContext): ScreenCo
   if (type === 'Input') {
     const name = requireString(raw, 'name', 'Input', path);
     const inputType = raw.inputType;
-    if (typeof inputType !== 'string' || !VALID_INPUT_TYPES.includes(inputType as any)) {
+        if (typeof inputType !== 'string' || !isInputType(inputType)) {
       throw new ScreenParseError(
         `"inputType" debe ser uno de: ${VALID_INPUT_TYPES.join(', ')}`,
         path
@@ -226,7 +243,7 @@ function parseComponent(raw: unknown, path: string, ctx: ParseContext): ScreenCo
       type: 'Input',
       id,
       name,
-      inputType: inputType as (typeof VALID_INPUT_TYPES)[number],
+      inputType,
       label: requireString(raw, 'label', 'Input', path),
       required: optionalBoolean(raw, 'required', path),
       placeholder: optionalString(raw, 'placeholder', path),

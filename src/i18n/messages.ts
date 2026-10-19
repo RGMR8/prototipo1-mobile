@@ -19,18 +19,19 @@ export const messages = {
     testTitle: 'Función de prueba',
     testMessage: 'Esta función está escrita en React y la ejecutó el backend desde el JSON.',
   },
-  errors: {
+    errors: {
     title: 'Algo salió mal',
     retry: 'Reintentar',
     network: 'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
     timeout: 'El servidor tardó demasiado en responder. Inténtalo de nuevo.',
     invalidResponse: 'El servidor envió una respuesta inválida.',
     invalidScreen: 'La pantalla recibida no es válida.',
+    render: 'No se pudo mostrar esta pantalla.',
+    unknownComponent: 'Este contenido no está disponible en esta versión de la app.',
     http401: 'Tu sesión expiró. Inicia sesión de nuevo.',
     http403: 'No tienes permiso para realizar esta acción.',
     http404: 'No encontramos lo que buscabas.',
     http500: 'Ocurrió un error en el servidor. Inténtalo más tarde.',
     unknown: 'Ocurrió un error inesperado.',
-    render: 'No se pudo mostrar esta pantalla.',
   },
 } as const;

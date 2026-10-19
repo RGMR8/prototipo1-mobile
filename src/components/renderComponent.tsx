@@ -6,6 +6,7 @@ import { Form } from './form/Form';
 import { FormGroup } from './form/FormGroup';
 import { Input } from './form/Input';
 import { Select } from './form/Select';
+import { UnknownFallback } from './primitives/UnknownFallback';
 
 /**
  * Despachador: recibe un componente ya parseado y devuelve el elemento
@@ -56,6 +57,11 @@ export function ScreenComponentRenderer({ component }: { component: ScreenCompon
   if (component.type === 'Select') {
     const select = <Select {...component} />;
     return select;
+  }
+
+  if (component.type === 'Unknown') {
+    const unknown = <UnknownFallback originalType={component.originalType} />;
+    return unknown;
   }
 
   throw new Error(`Tipo de componente no soportado: ${(component as ScreenComponent).type}`);
