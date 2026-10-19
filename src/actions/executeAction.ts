@@ -3,7 +3,8 @@ import type { FormContextValue } from '../components/form/FormContext';
 import { callMethod, submitForm } from '../api/client';
 import { parseSubmitResponse } from '../parser/parseScreen';
 import { getRegisteredFunction } from './functionRegistry';
-import { clearToken, saveToken } from '../session/tokenStorage';
+import { saveToken } from '../session/tokenStorage';
+import { endSession } from '../session/endSession';
 import { LOGIN_SCREEN_ID } from '../navigation/constants';
 
 export interface ActionDeps {
@@ -42,16 +43,16 @@ export async function executeAction(action: ScreenAction, deps: ActionDeps): Pro
     return;
   }
 
-    if (action.type === 'LOGOUT') {
+  if (action.type === 'LOGOUT') {
     try {
       // Primero el backend: necesita el token en el header para revocarlo.
       const raw = await callMethod('logout');
-      await clearToken();
+      await endSession();
       await applyResponse(parseSubmitResponse(raw), deps);
     } catch {
       // Sin red o error del servidor: el cierre local se completa igual.
       // El token del servidor no queda revocado, pero vence solo (8 h).
-      await clearToken();
+      await endSession();
       deps.resetTo(LOGIN_SCREEN_ID);
     }
     return;

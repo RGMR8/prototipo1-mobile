@@ -9,7 +9,7 @@ import { NavigationContext } from './src/navigation/NavigationContext';
 import { INITIAL_SCREEN_ID, LOGIN_SCREEN_ID } from './src/navigation/constants';
 import { useScreen } from './src/hooks/useScreen';
 import { ApiError } from './src/api/apiError';
-import { clearToken } from './src/session/tokenStorage';
+import { endSession } from './src/session/endSession';
 import { errorMessage } from './src/errors/errorMessage';
 import { theme } from './src/theme/theme';
 import { messages } from './src/i18n/messages';
@@ -50,7 +50,7 @@ export default function App() {
   useEffect(() => {
     if (state.status !== 'error') return;
     if (!isUnauthorized(state.error)) return;
-    clearToken().then(() => resetTo(LOGIN_SCREEN_ID));
+      endSession().then(() => resetTo(LOGIN_SCREEN_ID));
   }, [state, resetTo]);
 
   // Botón "atrás" físico de Android. En web es un no-op.

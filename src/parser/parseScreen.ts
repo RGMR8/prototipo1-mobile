@@ -232,7 +232,7 @@ function parseComponent(raw: unknown, path: string, ctx: ParseContext): ScreenCo
   if (type === 'Input') {
     const name = requireString(raw, 'name', 'Input', path);
     const inputType = raw.inputType;
-        if (typeof inputType !== 'string' || !isInputType(inputType)) {
+    if (typeof inputType !== 'string' || !isInputType(inputType)) {
       throw new ScreenParseError(
         `"inputType" debe ser uno de: ${VALID_INPUT_TYPES.join(', ')}`,
         path
@@ -271,6 +271,15 @@ function parseComponent(raw: unknown, path: string, ctx: ParseContext): ScreenCo
   throw new ScreenParseError(`Tipo de componente no soportado: ${type}`, path);
 }
 
+/** TTL en segundos (#4). Ausente = 0 (no se cachea). */
+function parseTtl(raw: unknown): number {
+  if (raw === undefined) return 0;
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 0) {
+    throw new ScreenParseError('"ttl" debe ser un entero mayor o igual a 0 (segundos)', 'root');
+  }
+  return raw;
+}
+
 /**
  * Convierte el JSON crudo recibido del backend en un ScreenDefinition tipado.
  * Lanza ScreenParseError si la estructura no coincide con lo esperado.
@@ -280,7 +289,7 @@ export function parseScreen(raw: unknown): ScreenDefinition {
     throw new ScreenParseError('La raíz del JSON debe ser un objeto', 'root');
   }
 
-  const { screenId, title, components } = raw;
+  const { screenId, title, components, ttl } = raw;
 
   if (typeof screenId !== 'string') {
     throw new ScreenParseError('Falta "screenId" (string)', 'root');
@@ -297,6 +306,7 @@ export function parseScreen(raw: unknown): ScreenDefinition {
   return {
     screenId,
     title,
+    ttl: parseTtl(ttl),
     components: components.map((c, index) =>
       parseComponent(c, `root.components[${index}]`, rootCtx)
     ),

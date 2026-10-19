@@ -106,6 +106,8 @@ export interface ScreenDefinition {
   screenId: string;
   title: string;
   components: ScreenComponent[];
+  /** Segundos que la pantalla puede servirse desde caché. 0 = no se cachea. */
+  ttl: number;
 }
 
 /** Respuesta del backend a un SUBMIT: el servidor decide qué sigue. */

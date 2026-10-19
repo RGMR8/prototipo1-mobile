@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchScreen } from '../api/client';
 import { parseScreen } from '../parser/parseScreen';
+import { loadScreen } from '../screens/loadScreen';
 import type { ScreenDefinition } from '../types/screen';
 
 /** Estado explícito de la pantalla: nunca más un "Cargando..." sin salida. */
@@ -25,8 +26,7 @@ export function useScreen(screenId: string, key: number): { state: ScreenState; 
     let cancelled = false;
     setState({ status: 'loading' });
 
-    fetchScreen(screenId)
-      .then((raw) => parseScreen(raw))
+    loadScreen(screenId)
       .then((screen) => {
         if (cancelled) return;
         setState({ status: 'ready', screen });
