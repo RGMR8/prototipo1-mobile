@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 /**
  * Caché local de pantallas (#4).
  *
@@ -28,7 +29,18 @@ function isCacheEntry(value: unknown): value is CacheEntry {
 }
 
 /** Devuelve el JSON crudo si existe y no venció; si venció lo borra. null si no hay. */
-export async function getFreshScreen(screenId: string): Promise<unknown | null> {
+export interface CachedScreen {
+  raw: unknown;
+  /** true si sigue dentro de su TTL. */
+  fresh: boolean;
+}
+
+/**
+ * Devuelve la pantalla guardada, vigente o no. El TTL indica si está
+ * fresca (usar sin red) o vencida (pedir al servidor primero). Una
+ * vencida NO se borra: sirve de respaldo si no hay conexión.
+ */
+export async function getCachedScreen(screenId: string): Promise<CachedScreen | null> {
   try {
     const stored = await AsyncStorage.getItem(keyOf(screenId));
     if (stored === null) return null;
@@ -39,17 +51,12 @@ export async function getFreshScreen(screenId: string): Promise<unknown | null> 
       return null;
     }
 
-    const expired = Date.now() - entry.savedAt >= entry.ttl * 1000;
-    if (expired) {
-      await removeScreen(screenId);
-      return null;
-    }
-    return entry.raw;
+    const fresh = Date.now() - entry.savedAt < entry.ttl * 1000;
+    return { raw: entry.raw, fresh };
   } catch {
     return null;
   }
 }
-
 /** Guarda la pantalla si su TTL lo permite (ttl > 0). */
 export async function saveScreen(screenId: string, raw: unknown, ttl: number): Promise<void> {
   if (ttl <= 0) return;
