@@ -70,10 +70,16 @@ export async function removeScreen(screenId: string): Promise<void> {
 }
 
 /** Borra todas las pantallas cacheadas (fin de sesión). */
-export async function clearScreenCache(): Promise<void> {
+/**
+ * Borra las pantallas cacheadas (fin de sesión).
+ * `keep`: pantallas que se conservan porque no dependen del usuario
+ * (ej. login, que es pública).
+ */
+export async function clearScreenCache(keep: string[] = []): Promise<void> {
   try {
+    const keepKeys = keep.map(keyOf);
     const keys = await AsyncStorage.getAllKeys();
-    const screenKeys = keys.filter((key) => key.startsWith(KEY_PREFIX));
+    const screenKeys = keys.filter((key) => key.startsWith(KEY_PREFIX) && !keepKeys.includes(key));
     if (screenKeys.length === 0) return;
     await AsyncStorage.multiRemove(screenKeys);
   } catch {
