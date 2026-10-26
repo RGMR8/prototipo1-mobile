@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { Callout, Camera, Map, ViewAnnotation } from '@maplibre/maplibre-react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 import type { MapComponent, MapMarker } from '../../types/screen';
 import { theme } from '../../theme/theme';
 import { MAP_STYLE_URL } from './mapConfig';
@@ -7,9 +8,13 @@ import { MAP_STYLE_URL } from './mapConfig';
 /**
  * Mapa interactivo en Android/iOS con MapLibre (#5). Zoom y desplazamiento
  * los da el mapa nativo; región y marcadores vienen del backend.
- * En la web se usa MapView.tsx (lista de ubicaciones).
+ * Al tocar un marcador se muestra su ficha abajo del mapa; tocar la ficha la
+ * cierra. En la web se usa MapView.tsx (lista de ubicaciones).
  */
 export function MapView({ height, region, markers }: MapComponent) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = markers.find((marker) => marker.id === selectedId);
+
   return (
     <View style={[styles.box, { height }]}>
       <Map style={StyleSheet.absoluteFill} mapStyle={MAP_STYLE_URL}>
@@ -20,32 +25,31 @@ export function MapView({ height, region, markers }: MapComponent) {
           }}
         />
         {markers.map((marker) => (
-          <MarkerPin key={marker.id} marker={marker} />
+          <Marker key={marker.id} id={marker.id} lngLat={[marker.longitude, marker.latitude]}>
+            <Pressable
+              onPress={() => setSelectedId(marker.id)}
+              hitSlop={12}
+              style={[styles.pin, marker.id === selectedId && styles.pinSelected]}
+            />
+          </Marker>
         ))}
       </Map>
+      {selected !== undefined && (
+        <MarkerCard marker={selected} onClose={() => setSelectedId(null)} />
+      )}
     </View>
   );
 }
 
-/** Un marcador: el punto en el mapa y, al tocarlo, su título y descripción. */
-function MarkerPin({ marker }: { marker: MapMarker }) {
+/** Ficha del marcador seleccionado: título y descripción. */
+function MarkerCard({ marker, onClose }: { marker: MapMarker; onClose: () => void }) {
   return (
-    <ViewAnnotation
-      id={marker.id}
-      lngLat={[marker.longitude, marker.latitude]}
-      title={marker.title ?? marker.id}
-      anchor="bottom"
-    >
-      <View style={styles.pin} />
-      <Callout>
-        <View style={styles.callout}>
-          <Text style={styles.calloutTitle}>{marker.title ?? marker.id}</Text>
-          {marker.description !== undefined && (
-            <Text style={styles.calloutText}>{marker.description}</Text>
-          )}
-        </View>
-      </Callout>
-    </ViewAnnotation>
+    <Pressable style={styles.card} onPress={onClose}>
+      <Text style={styles.cardTitle}>{marker.title ?? marker.id}</Text>
+      {marker.description !== undefined && (
+        <Text style={styles.cardText}>{marker.description}</Text>
+      )}
+    </Pressable>
   );
 }
 
@@ -62,15 +66,26 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.onPrimary,
     backgroundColor: theme.colors.primary,
   },
-  callout: {
-    padding: 8,
-    maxWidth: 220,
+  pinSelected: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
-  calloutTitle: {
+  card: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    bottom: 8,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: theme.colors.onPrimary,
+    elevation: 4,
+  },
+  cardTitle: {
     color: theme.colors.text,
     fontWeight: '600',
   },
-  calloutText: {
+  cardText: {
     color: theme.colors.textSecondary,
   },
 });
