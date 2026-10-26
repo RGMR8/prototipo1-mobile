@@ -7,6 +7,7 @@ import { FormGroup } from './form/FormGroup';
 import { Input } from './form/Input';
 import { Select } from './form/Select';
 import { UnknownFallback } from './primitives/UnknownFallback';
+import { MapView } from './map/MapView';
 
 /**
  * Despachador: recibe un componente ya parseado y devuelve el elemento
@@ -62,6 +63,10 @@ export function ScreenComponentRenderer({ component }: { component: ScreenCompon
   if (component.type === 'Unknown') {
     const unknown = <UnknownFallback originalType={component.originalType} />;
     return unknown;
+  }
+
+  if (component.type === 'Map') {
+    return <MapView key={component.id} {...component} />;
   }
 
   throw new Error(`Tipo de componente no soportado: ${(component as ScreenComponent).type}`);

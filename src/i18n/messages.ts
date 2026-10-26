@@ -34,4 +34,9 @@ export const messages = {
     http500: 'Ocurrió un error en el servidor. Inténtalo más tarde.',
     unknown: 'Ocurrió un error inesperado.',
   },
+    map: {
+    unavailable: 'Ubicaciones',
+    center: 'Centro:',
+    noMarkers: 'Sin ubicaciones.',
+  },
 } as const;

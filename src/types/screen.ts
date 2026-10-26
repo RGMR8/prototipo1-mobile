@@ -99,7 +99,9 @@ export type ScreenComponent =
   | FormGroupComponent
   | InputComponent
   | SelectComponent
-  | UnknownComponent;
+  | UnknownComponent  
+  | UnknownComponent
+  | MapComponent;
 
 /** Estructura completa de una pantalla, tal como la manda el backend. */
 export interface ScreenDefinition {
@@ -141,5 +143,28 @@ export interface UnknownComponent {
   id: string;
   /** El type que mandó el backend, para el aviso y el diagnóstico. */
   originalType: string;
+}
+
+export interface MapRegion {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+}
+
+export interface MapMarker {
+  id: string;
+  latitude: number;
+  longitude: number;
+  title?: string;
+  description?: string;
+}
+
+export interface MapComponent {
+  type: 'Map';
+  id: string;
+  height: number;
+  region: MapRegion;
+  markers: MapMarker[];
+  style?: ComponentStyle;
 }
 

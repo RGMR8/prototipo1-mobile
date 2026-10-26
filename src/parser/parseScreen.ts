@@ -5,6 +5,9 @@ import type {
   ScreenAction,
   SelectOption,
   SubmitResponse,
+  MapComponent,
+  MapMarker,
+  MapRegion,
 } from '../types/screen';
 import { isRegisteredFunction } from '../actions/functionRegistry';
 
@@ -22,7 +25,7 @@ export class ScreenParseError extends Error {
 }
 
 const VALID_COMPONENT_TYPES = [
-  'Text', 'Container', 'Button', 'Form', 'FormGroup', 'Input', 'Select',
+  'Text', 'Container', 'Button', 'Form', 'FormGroup', 'Input', 'Select', 'Map',
 ] as const;
 
 type KnownComponentType = (typeof VALID_COMPONENT_TYPES)[number];
@@ -152,6 +155,72 @@ function parseOptions(raw: unknown, path: string): SelectOption[] {
   });
 }
 
+/** Número obligatorio dentro de un rango (coordenadas, zoom). #5 */
+function requireNumber(
+  raw: Record<string, unknown>,
+  field: string,
+  owner: string,
+  path: string,
+  min: number,
+  max: number
+): number {
+  const value = raw[field];
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+    throw new ScreenParseError(`"${field}" debe ser un número entre ${min} y ${max} en ${owner}`, path);
+  }
+  return value;
+}
+
+/** Alto del mapa si el backend no lo manda. #5 */
+const DEFAULT_MAP_HEIGHT = 300;
+
+function parseMapHeight(raw: unknown, path: string): number {
+  if (raw === undefined) return DEFAULT_MAP_HEIGHT;
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 100 || raw > 1000) {
+    throw new ScreenParseError('"height" del mapa debe ser un entero entre 100 y 1000', path);
+  }
+  return raw;
+}
+
+/** Centro y zoom inicial del mapa. #5 */
+function parseMapRegion(raw: unknown, path: string): MapRegion {
+  if (!isPlainObject(raw)) {
+    throw new ScreenParseError('Falta "region" (objeto) en Map', path);
+  }
+  return {
+    latitude: requireNumber(raw, 'latitude', 'region', path, -90, 90),
+    longitude: requireNumber(raw, 'longitude', 'region', path, -180, 180),
+    zoom: requireNumber(raw, 'zoom', 'region', path, 0, 22),
+  };
+}
+
+/** Marcadores: lista de datos. Sin marcadores es válido (mapa vacío). #5 */
+function parseMapMarkers(raw: unknown, path: string): MapMarker[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw)) {
+    throw new ScreenParseError('"markers" debe ser un array', path);
+  }
+  const ids = new Set<string>();
+  return raw.map((marker, index) => {
+    const markerPath = `${path}.markers[${index}]`;
+    if (!isPlainObject(marker)) {
+      throw new ScreenParseError('Cada marcador debe ser un objeto', markerPath);
+    }
+    const id = requireString(marker, 'id', 'el marcador', markerPath);
+    if (ids.has(id)) {
+      throw new ScreenParseError(`"id" de marcador duplicado: ${id}`, markerPath);
+    }
+    ids.add(id);
+    return {
+      id,
+      latitude: requireNumber(marker, 'latitude', 'el marcador', markerPath, -90, 90),
+      longitude: requireNumber(marker, 'longitude', 'el marcador', markerPath, -180, 180),
+      title: optionalString(marker, 'title', markerPath),
+      description: optionalString(marker, 'description', markerPath),
+    };
+  });
+}
+
 function parseChildren(
   raw: Record<string, unknown>,
   owner: string,
@@ -264,6 +333,18 @@ function parseComponent(raw: unknown, path: string, ctx: ParseContext): ScreenCo
       placeholder: optionalString(raw, 'placeholder', path),
       style,
     };
+  }
+
+  if (type === 'Map') {
+    const map: MapComponent = {
+      type: 'Map',
+      id,
+      height: parseMapHeight(raw.height, path),
+      region: parseMapRegion(raw.region, `${path}.region`),
+      markers: parseMapMarkers(raw.markers, path),
+      style,
+    };
+    return map;
   }
 
   // Inalcanzable en la práctica: VALID_COMPONENT_TYPES ya lo filtró arriba.
