@@ -74,7 +74,10 @@ export type ScreenAction =
   | { type: 'CALL'; function: string }
   | { type: 'LOGOUT' };
 
-export interface TextComponent extends BaseComponent {
+
+/** La acción SUBMIT sola: la usan el Form y el Button para enviar. */
+export type SubmitAction = Extract<ScreenAction, { type: 'SUBMIT' }>;
+  export interface TextComponent extends BaseComponent {
   type: 'Text';
   content: string;
 }

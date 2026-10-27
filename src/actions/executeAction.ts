@@ -1,5 +1,5 @@
 import type { ScreenAction, SubmitResponse } from '../types/screen';
-import type { FormContextValue } from '../components/form/FormContext';
+import type { FormSubmitTarget } from '../components/form/FormContext';
 import { callMethod, submitForm } from '../api/client';
 import { parseSubmitResponse } from '../parser/parseScreen';
 import { getRegisteredFunction } from './functionRegistry';
@@ -10,8 +10,8 @@ import { LOGIN_SCREEN_ID } from '../navigation/constants';
 export interface ActionDeps {
   navigate: (screenId: string) => void;
   resetTo: (screenId: string) => void;
-  /** null si el botón no está dentro de un Form. */
-  form: FormContextValue | null;
+  /** null si la acción no viene de un Form. */
+  form: FormSubmitTarget | null;
 }
 
 export async function executeAction(action: ScreenAction, deps: ActionDeps): Promise<void> {

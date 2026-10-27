@@ -11,9 +11,12 @@ import { messages } from '../../i18n/messages';
  * que el estilo de la API va completo a la caja, encima del estilo base.
  * El borde de error va al final para que siempre se vea, aunque la API
  * haya definido otro borderColor.
+ *
+ * Enter (web) o la tecla "Ir" del teclado (teléfono) envían el form por el
+ * mismo camino que el botón SUBMIT.
  */
 export function Input({ name, inputType, label, placeholder, required, style }: InputComponent) {
-  const { values, errors, setValue } = useFormContext();
+  const { values, errors, setValue, submit } = useFormContext();
   const error = errors[name];
 
   return (
@@ -28,6 +31,10 @@ export function Input({ name, inputType, label, placeholder, required, style }: 
         placeholderTextColor={theme.colors.placeholder}
         secureTextEntry={inputType === 'password'}
         autoCapitalize="none"
+        returnKeyType="go"
+        onSubmitEditing={() => {
+          void submit();
+        }}
         style={[fieldStyles.box, styles.input, mapStyle(style), error !== undefined && fieldStyles.boxError]}
       />
       {error ? <RNText style={fieldStyles.errorText}>{error}</RNText> : null}
