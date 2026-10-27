@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { FormComponent, RenderChild, ScreenComponent, SubmitAction } from '../../types/screen';
-import { mapStyle } from '../mapStyle';
+import { mapStyle, useResolvedStyle } from '../mapStyle';
 import { FormContext, type FormContextValue } from './FormContext';
 import { collectFields, validateFields } from './formValidation';
 import { executeAction } from '../../actions/executeAction';
@@ -15,6 +15,7 @@ interface Props extends FormComponent {
 
 export function Form({ children, style, renderChild: RenderChild }: Props) {
   const { navigate, resetTo } = useNavigation();
+  const resolved = useResolvedStyle(style);
   const fields = useMemo(() => collectFields(children), [children]);
   const defaultSubmit = useMemo(() => findSubmitAction(children), [children]);
 
@@ -76,7 +77,7 @@ export function Form({ children, style, renderChild: RenderChild }: Props) {
 
   return (
     <FormContext.Provider value={ctx}>
-      <View style={[styles.form, mapStyle(style)]}>
+      <View style={[styles.form, mapStyle(resolved)]}>
         {children.map((child) => (
           <RenderChild key={child.id} component={child} />
         ))}
