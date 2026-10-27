@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { theme } from '../theme/theme';
+import { View, Text, TouchableOpacity } from 'react-native';
+import type { AppTheme } from '../theme/theme';
+import { useThemedStyles } from '../theme/useTheme';
 import { messages } from '../i18n/messages';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
  * servidor no está disponible.
  */
 export function ErrorScreen({ message, onRetry }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{messages.errors.title}</Text>
@@ -25,29 +27,29 @@ export function ErrorScreen({ message, onRetry }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: AppTheme) => ({
   container: {
-    gap: theme.spacing.md,
-    paddingVertical: theme.spacing.xl,
+    gap: t.spacing.md,
+    paddingVertical: t.spacing.xl,
   },
   title: {
-    fontSize: theme.fontSize.title,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text,
+    fontSize: t.fontSize.title,
+    fontWeight: t.fontWeight.bold,
+    color: t.colors.text,
   },
   message: {
-    fontSize: theme.fontSize.subtitle,
-    color: theme.colors.textSecondary,
+    fontSize: t.fontSize.subtitle,
+    color: t.colors.textSecondary,
   },
   button: {
-    backgroundColor: theme.colors.primary,
-    padding: theme.field.padding,
-    borderRadius: theme.radius.sm,
-    alignItems: 'center',
+    backgroundColor: t.colors.primary,
+    padding: t.field.padding,
+    borderRadius: t.radius.sm,
+    alignItems: 'center' as const,
   },
   buttonText: {
-    color: theme.colors.onPrimary,
-    fontSize: theme.fontSize.body,
-    fontWeight: theme.fontWeight.bold,
+    color: t.colors.onPrimary,
+    fontSize: t.fontSize.body,
+    fontWeight: t.fontWeight.bold,
   },
 });

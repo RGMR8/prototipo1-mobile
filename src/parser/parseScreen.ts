@@ -1,6 +1,7 @@
 import type {
   ScreenDefinition,
   ScreenComponent,
+  BaseStyle,
   ComponentStyle,
   ScreenAction,
   SelectOption,
@@ -89,23 +90,41 @@ function optionalBoolean(raw: Record<string, unknown>, field: string, path: stri
  *   delante del APK instalado, igual que con los componentes Unknown (#4).
  * - Propiedad conocida con valor inválido: ScreenParseError con la ruta
  *   exacta. Es un error del backend y debe verse, no esconderse.
+ * - Bloque `dark`: lo que cambia en modo oscuro. Se valida con las mismas
+ *   reglas; no se permite un `dark` dentro de otro.
  */
 function parseStyle(raw: unknown, path: string): ComponentStyle | undefined {
   if (raw === undefined) return undefined;
   if (!isPlainObject(raw)) {
     throw new ScreenParseError('El campo "style" debe ser un objeto', path);
   }
+  const style: ComponentStyle = parseStyleProperties(raw, 'style', path);
+  if (raw.dark === undefined) return style;
+  if (!isPlainObject(raw.dark)) {
+    throw new ScreenParseError('"style.dark" debe ser un objeto', `${path}.dark`);
+  }
+  if (raw.dark.dark !== undefined) {
+    throw new ScreenParseError('"style.dark" no puede tener otro bloque "dark"', `${path}.dark`);
+  }
+  return { ...style, dark: parseStyleProperties(raw.dark, 'style.dark', `${path}.dark`) };
+}
+
+/**
+ * Valida cada propiedad conocida de un objeto de estilo e ignora las demás.
+ * `label` es el nombre que sale en el mensaje: "style" o "style.dark".
+ */
+function parseStyleProperties(raw: Record<string, unknown>, label: string, path: string): BaseStyle {
   const style: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (!isStyleKey(key)) continue;
     const problem = checkStyleValue(STYLE_SPEC[key], value);
     if (problem !== null) {
-      throw new ScreenParseError(`"style.${key}" ${problem}`, `${path}.${key}`);
+      throw new ScreenParseError(`"${label}.${key}" ${problem}`, `${path}.${key}`);
     }
     style[key] = value;
   }
-  // Cada valor pasó por su regla, así que el objeto cumple ComponentStyle.
-  return style as ComponentStyle;
+  // Cada valor pasó por su regla, así que el objeto cumple BaseStyle.
+  return style as BaseStyle;
 }
 
 function parseAction(raw: unknown, path: string, ctx: ParseContext): ScreenAction | undefined {

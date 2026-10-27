@@ -1,9 +1,10 @@
-import { View, Text as RNText, TextInput, StyleSheet } from 'react-native';
+import { View, Text as RNText, TextInput } from 'react-native';
 import type { InputComponent } from '../../types/screen';
-import { mapStyle } from '../mapStyle';
-import { theme } from '../../theme/theme';
+import type { AppTheme } from '../../theme/theme';
+import { useTheme, useThemedStyles } from '../../theme/useTheme';
+import { mapStyle, useResolvedStyle } from '../mapStyle';
 import { useFormContext } from './FormContext';
-import { fieldStyles } from './fieldStyles';
+import { useFieldStyles } from './fieldStyles';
 import { messages } from '../../i18n/messages';
 
 /**
@@ -17,6 +18,10 @@ import { messages } from '../../i18n/messages';
  */
 export function Input({ name, inputType, label, placeholder, required, style }: InputComponent) {
   const { values, errors, setValue, submit } = useFormContext();
+  const { colors } = useTheme();
+  const fieldStyles = useFieldStyles();
+  const styles = useThemedStyles(makeStyles);
+  const resolved = useResolvedStyle(style);
   const error = errors[name];
 
   return (
@@ -28,23 +33,23 @@ export function Input({ name, inputType, label, placeholder, required, style }: 
         value={values[name] ?? ''}
         onChangeText={(text) => setValue(name, text)}
         placeholder={placeholder}
-        placeholderTextColor={theme.colors.placeholder}
+        placeholderTextColor={colors.placeholder}
         secureTextEntry={inputType === 'password'}
         autoCapitalize="none"
         returnKeyType="go"
         onSubmitEditing={() => {
           void submit();
         }}
-        style={[fieldStyles.box, styles.input, mapStyle(style), error !== undefined && fieldStyles.boxError]}
+        style={[fieldStyles.box, styles.input, mapStyle(resolved), error !== undefined && fieldStyles.boxError]}
       />
       {error ? <RNText style={fieldStyles.errorText}>{error}</RNText> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: AppTheme) => ({
   input: {
-    fontSize: theme.fontSize.body,
-    color: theme.colors.text,
+    fontSize: t.fontSize.body,
+    color: t.colors.text,
   },
 });

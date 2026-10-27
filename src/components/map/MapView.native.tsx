@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-native';
 import type { MapComponent, MapMarker } from '../../types/screen';
-import { mapStyle } from '../mapStyle';
-import { theme } from '../../theme/theme';
-import { MAP_STYLE_URL } from './mapConfig';
+import type { AppTheme } from '../../theme/theme';
+import { useTheme, useThemedStyles } from '../../theme/useTheme';
+import { mapStyle, useResolvedStyle } from '../mapStyle';
+import { MAP_STYLE_URLS } from './mapConfig';
 
 /**
  * Mapa interactivo en Android/iOS con MapLibre (#5). Zoom y desplazamiento
@@ -13,17 +14,21 @@ import { MAP_STYLE_URL } from './mapConfig';
  * Los marcadores se dibujan como una capa del propio mapa (círculos), que es
  * lo que recomienda MapLibre: el toque lo resuelve el mapa y escala a muchos
  * puntos. Al tocar uno se muestra su ficha; tocar la ficha la cierra.
+ * El fondo del mapa sigue el modo claro/oscuro del teléfono.
  * El estilo de la API se aplica a la caja del mapa; `height` del componente
  * va al final porque es el alto que el backend definió para el mapa.
  * En la web se usa MapView.tsx (lista de ubicaciones).
  */
 export function MapView({ id, height, region, markers, style }: MapComponent) {
+  const current = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const resolved = useResolvedStyle(style);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = markers.find((marker) => marker.id === selectedId);
 
   return (
-    <View style={[styles.box, mapStyle(style), { height }]}>
-      <Map style={StyleSheet.absoluteFill} mapStyle={MAP_STYLE_URL}>
+    <View style={[styles.box, mapStyle(resolved), { height }]}>
+      <Map style={StyleSheet.absoluteFill} mapStyle={MAP_STYLE_URLS[current.scheme]}>
         <Camera
           initialViewState={{
             center: [region.longitude, region.latitude],
@@ -45,8 +50,8 @@ export function MapView({ id, height, region, markers, style }: MapComponent) {
             type="circle"
             id={`${id}-markers-layer`}
             paint={{
-              'circle-color': theme.colors.primary,
-              'circle-stroke-color': theme.colors.onPrimary,
+              'circle-color': current.colors.primary,
+              'circle-stroke-color': current.colors.onPrimary,
               'circle-stroke-width': 2,
               'circle-radius': ['case', ['==', ['get', 'markerId'], selectedId ?? ''], 12, 9],
             }}
@@ -54,7 +59,9 @@ export function MapView({ id, height, region, markers, style }: MapComponent) {
         </GeoJSONSource>
       </Map>
       {selected !== undefined && (
-        <MarkerCard marker={selected} onClose={() => setSelectedId(null)} />
+        <Pressable style={styles.card} onPress={() => setSelectedId(null)}>
+          <MarkerCardContent marker={selected} styles={styles} />
+        </Pressable>
       )}
     </View>
   );
@@ -72,38 +79,38 @@ function toGeoJson(markers: MapMarker[]): FeatureCollection {
   };
 }
 
-/** Ficha del marcador seleccionado: título y descripción. */
-function MarkerCard({ marker, onClose }: { marker: MapMarker; onClose: () => void }) {
+/** Contenido de la ficha del marcador seleccionado: título y descripción. */
+function MarkerCardContent({ marker, styles }: { marker: MapMarker; styles: ReturnType<typeof makeStyles> }) {
   return (
-    <Pressable style={styles.card} onPress={onClose}>
+    <>
       <Text style={styles.cardTitle}>{marker.title ?? marker.id}</Text>
       {marker.description !== undefined && (
         <Text style={styles.cardText}>{marker.description}</Text>
       )}
-    </Pressable>
+    </>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: AppTheme) => ({
   box: {
-    borderRadius: theme.radius.md,
-    overflow: 'hidden',
+    borderRadius: t.radius.md,
+    overflow: 'hidden' as const,
   },
   card: {
-    position: 'absolute',
-    left: theme.spacing.sm,
-    right: theme.spacing.sm,
-    bottom: theme.spacing.sm,
-    padding: theme.spacing.md,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surface,
+    position: 'absolute' as const,
+    left: t.spacing.sm,
+    right: t.spacing.sm,
+    bottom: t.spacing.sm,
+    padding: t.spacing.md,
+    borderRadius: t.radius.md,
+    backgroundColor: t.colors.surface,
     elevation: 4,
   },
   cardTitle: {
-    color: theme.colors.text,
-    fontWeight: theme.fontWeight.bold,
+    color: t.colors.text,
+    fontWeight: t.fontWeight.bold,
   },
   cardText: {
-    color: theme.colors.textSecondary,
+    color: t.colors.textSecondary,
   },
 });

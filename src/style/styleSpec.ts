@@ -1,10 +1,11 @@
-import type { ComponentStyle } from '../types/screen';
+import type { BaseStyle } from '../types/screen';
 
 /**
  * Vocabulario de estilos que acepta la API (#5): una regla por propiedad.
  * Es la única fuente de verdad: el parser valida con estas reglas y
  * splitStyle separa texto/contenedor con el campo `text`.
- * El tipo obliga a que cada propiedad de ComponentStyle tenga su regla.
+ * El tipo obliga a que cada propiedad de BaseStyle tenga su regla.
+ * `dark` no está aquí: no es una propiedad, es un bloque (ver parseStyle).
  */
 export type StyleRule =
   | { kind: 'color'; text: boolean }
@@ -12,7 +13,7 @@ export type StyleRule =
   | { kind: 'dimension'; text: boolean }
   | { kind: 'enum'; text: boolean; values: readonly string[] };
 
-export type StyleKey = keyof ComponentStyle;
+export type StyleKey = keyof BaseStyle;
 
 const color = (text: boolean): StyleRule => ({ kind: 'color', text });
 const number = (text: boolean, min: number, max: number): StyleRule => ({ kind: 'number', text, min, max });

@@ -14,12 +14,16 @@
  * Son nombres y valores de React Native, así que se aplican sin traducir.
  * Cada propiedad tiene su regla de validación en style/styleSpec.ts: si se
  * agrega una aquí, TypeScript obliga a agregar su regla allá.
+ *
+ * BaseStyle son las propiedades; ComponentStyle es lo que manda la API:
+ * las propiedades más, opcional, un bloque `dark` con lo que cambia en
+ * modo oscuro (se aplica encima del estilo base).
  */
 
 /** Ancho o alto: número (dp) o porcentaje como texto, por ejemplo "50%". */
 export type Dimension = number | `${number}%`;
 
-export interface ComponentStyle {
+export interface BaseStyle {
   // Texto
   color?: string;
   fontSize?: number;
@@ -62,6 +66,11 @@ export interface ComponentStyle {
   maxWidth?: Dimension;
 }
 
+/** Estilo de un componente: el base y, opcional, lo que cambia en modo oscuro. */
+export interface ComponentStyle extends BaseStyle {
+  dark?: BaseStyle;
+}
+
 interface BaseComponent {
   id: string;
   style?: ComponentStyle;
@@ -74,10 +83,10 @@ export type ScreenAction =
   | { type: 'CALL'; function: string }
   | { type: 'LOGOUT' };
 
-
 /** La acción SUBMIT sola: la usan el Form y el Button para enviar. */
 export type SubmitAction = Extract<ScreenAction, { type: 'SUBMIT' }>;
-  export interface TextComponent extends BaseComponent {
+
+export interface TextComponent extends BaseComponent {
   type: 'Text';
   content: string;
 }
@@ -203,3 +212,4 @@ export interface MapComponent {
   markers: MapMarker[];
   style?: ComponentStyle;
 }
+

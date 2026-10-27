@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '../../theme/theme';
+import { View, Text } from 'react-native';
+import type { AppTheme } from '../../theme/theme';
+import { useThemedStyles } from '../../theme/useTheme';
 import { messages } from '../../i18n/messages';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
  * Discreto a propósito: avisa sin romper el resto de la pantalla.
  */
 export function UnknownFallback({ originalType }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.box}>
       <Text style={styles.text}>{messages.errors.unknownComponent}</Text>
@@ -19,21 +21,21 @@ export function UnknownFallback({ originalType }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: AppTheme) => ({
   box: {
-    borderWidth: theme.field.borderWidth,
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed',
-    borderRadius: theme.radius.sm,
-    padding: theme.spacing.md,
-    gap: theme.spacing.xs,
+    borderWidth: t.field.borderWidth,
+    borderColor: t.colors.border,
+    borderStyle: 'dashed' as const,
+    borderRadius: t.radius.sm,
+    padding: t.spacing.md,
+    gap: t.spacing.xs,
   },
   text: {
-    fontSize: theme.fontSize.body,
-    color: theme.colors.textSecondary,
+    fontSize: t.fontSize.body,
+    color: t.colors.textSecondary,
   },
   detail: {
-    fontSize: theme.fontSize.caption,
-    color: theme.colors.placeholder,
+    fontSize: t.fontSize.caption,
+    color: t.colors.placeholder,
   },
 });

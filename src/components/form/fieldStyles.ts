@@ -1,30 +1,36 @@
-import { StyleSheet } from 'react-native';
-import { theme } from '../../theme/theme';
+import type { AppTheme } from '../../theme/theme';
+import { useThemedStyles } from '../../theme/useTheme';
 
 /**
- * Estilos compartidos por los campos de formulario (Input, Select).
- * Antes estaban copiados en ambos componentes: label, caja con borde,
- * borde de error y mensaje de error.
+ * Estilos compartidos por los campos de formulario (Input, Select):
+ * label, caja con borde, borde de error y mensaje de error.
+ * #5: dependen del modo claro/oscuro, así que se piden con useFieldStyles().
  */
-export const fieldStyles = StyleSheet.create({
+const makeFieldStyles = (t: AppTheme) => ({
   wrapper: {
-    gap: theme.spacing.xs,
+    gap: t.spacing.xs,
   },
   label: {
-    fontSize: theme.fontSize.body,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: t.fontSize.body,
+    fontWeight: t.fontWeight.bold,
+    color: t.colors.text,
   },
   box: {
-    borderWidth: theme.field.borderWidth,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.sm,
-    padding: theme.field.padding,
+    borderWidth: t.field.borderWidth,
+    borderColor: t.colors.border,
+    borderRadius: t.radius.sm,
+    padding: t.field.padding,
+    backgroundColor: t.colors.surface,
   },
   boxError: {
-    borderColor: theme.colors.error,
+    borderColor: t.colors.error,
   },
   errorText: {
-    color: theme.colors.error,
-    fontSize: theme.fontSize.caption,
+    color: t.colors.error,
+    fontSize: t.fontSize.caption,
   },
 });
+
+export function useFieldStyles() {
+  return useThemedStyles(makeFieldStyles);
+}

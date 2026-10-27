@@ -4,12 +4,32 @@
  * Los componentes NO escriben valores sueltos ('#D32F2F', padding: 10...):
  * los toman de aquí. Cambiar el aspecto de la app = cambiar este archivo.
  *
- * Esto define los estilos BASE de la app. Los estilos que manda el backend
- * (campo `style` del JSON, vía mapStyle) se aplican encima y los sobrescriben.
- * En el Prototipo #5 (estilos desde la API) este archivo es el punto de partida.
+ * #5: hay dos paletas, clara y oscura, con las mismas claves. Los colores
+ * NO se importan directo: se leen con useTheme(), que devuelve la paleta
+ * del modo del teléfono. Lo demás (espaciados, tipografía…) no cambia con
+ * el modo y se puede usar directo desde `theme`.
+ *
+ * Los estilos que manda el backend (campo `style` del JSON) se aplican
+ * encima de estos estilos base y los sobrescriben.
  */
 
-export const colors = {
+export type ColorScheme = 'light' | 'dark';
+
+export interface ThemeColors {
+  background: string;
+  surface: string;
+  text: string;
+  textSecondary: string;
+  placeholder: string;
+  border: string;
+  divider: string;
+  error: string;
+  primary: string;
+  onPrimary: string;
+  overlay: string;
+}
+
+export const lightColors: ThemeColors = {
   background: '#FFFFFF',
   surface: '#FFFFFF',
   text: '#000000',
@@ -21,7 +41,21 @@ export const colors = {
   primary: '#22A45D',
   onPrimary: '#FFFFFF',
   overlay: 'rgba(0, 0, 0, 0.4)',
-} as const;
+};
+
+export const darkColors: ThemeColors = {
+  background: '#121212',
+  surface: '#1E1E1E',
+  text: '#F5F5F5',
+  textSecondary: '#B3B3B3',
+  placeholder: '#7A7A7A',
+  border: '#3D3D3D',
+  divider: '#2A2A2A',
+  error: '#EF5350',
+  primary: '#22A45D',
+  onPrimary: '#FFFFFF',
+  overlay: 'rgba(0, 0, 0, 0.6)',
+};
 
 export const spacing = {
   xs: 4,
@@ -60,4 +94,20 @@ export const field = {
   modalMaxHeight: '70%',
 } as const;
 
-export const theme = { colors, spacing, radius, fontSize, fontWeight, opacity, field } as const;
+/** Tokens que no dependen del modo: se pueden usar en StyleSheet.create directo. */
+export const theme = { spacing, radius, fontSize, fontWeight, opacity, field } as const;
+
+/** Tema completo de un modo: tokens + su paleta. Lo devuelve useTheme(). */
+export interface AppTheme {
+  scheme: ColorScheme;
+  colors: ThemeColors;
+  spacing: typeof spacing;
+  radius: typeof radius;
+  fontSize: typeof fontSize;
+  fontWeight: typeof fontWeight;
+  opacity: typeof opacity;
+  field: typeof field;
+}
+
+export const lightTheme: AppTheme = { scheme: 'light', colors: lightColors, ...theme };
+export const darkTheme: AppTheme = { scheme: 'dark', colors: darkColors, ...theme };

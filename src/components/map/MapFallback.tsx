@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { MapComponent } from '../../types/screen';
+import type { AppTheme } from '../../theme/theme';
+import { useThemedStyles } from '../../theme/useTheme';
 import { messages } from '../../i18n/messages';
-import { mapStyle } from '../mapStyle';
-import { theme } from '../../theme/theme';
+import { mapStyle, useResolvedStyle } from '../mapStyle';
 
 /**
  * Representación del Map sin mapa interactivo: muestra el centro y la lista
@@ -10,8 +11,11 @@ import { theme } from '../../theme/theme';
  * mapas nativa no funciona. El estilo de la API se aplica a la caja.
  */
 export function MapFallback({ height, region, markers, style }: MapComponent) {
+  const styles = useThemedStyles(makeStyles);
+  const resolved = useResolvedStyle(style);
+
   return (
-    <View style={[styles.box, mapStyle(style), { minHeight: height }]}>
+    <View style={[styles.box, mapStyle(resolved), { minHeight: height }]}>
       <Text style={styles.title}>{messages.map.unavailable}</Text>
       <Text style={styles.secondary}>
         {messages.map.center} {formatCoords(region.latitude, region.longitude)}
@@ -36,27 +40,27 @@ function formatCoords(latitude: number, longitude: number): string {
   return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: AppTheme) => ({
   box: {
-    borderWidth: theme.field.borderWidth,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    borderWidth: t.field.borderWidth,
+    borderColor: t.colors.border,
+    borderRadius: t.radius.md,
+    padding: t.spacing.md,
+    gap: t.spacing.sm,
   },
   title: {
-    color: theme.colors.text,
-    fontSize: theme.fontSize.subtitle,
-    fontWeight: theme.fontWeight.bold,
+    color: t.colors.text,
+    fontSize: t.fontSize.subtitle,
+    fontWeight: t.fontWeight.bold,
   },
   marker: {
-    gap: theme.spacing.xs,
+    gap: t.spacing.xs,
   },
   markerTitle: {
-    color: theme.colors.text,
-    fontWeight: theme.fontWeight.bold,
+    color: t.colors.text,
+    fontWeight: t.fontWeight.bold,
   },
   secondary: {
-    color: theme.colors.textSecondary,
+    color: t.colors.textSecondary,
   },
 });

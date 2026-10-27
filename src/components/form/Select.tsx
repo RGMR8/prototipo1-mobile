@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, Text as RNText, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
+import { View, Text as RNText, Pressable, Modal, ScrollView } from 'react-native';
 import type { SelectComponent } from '../../types/screen';
-import { mapStyle, splitStyle } from '../mapStyle';
-import { theme } from '../../theme/theme';
+import type { AppTheme } from '../../theme/theme';
+import { useThemedStyles } from '../../theme/useTheme';
+import { mapStyle, splitStyle, useResolvedStyle } from '../mapStyle';
 import { useFormContext } from './FormContext';
-import { fieldStyles } from './fieldStyles';
+import { useFieldStyles } from './fieldStyles';
 import { messages } from '../../i18n/messages';
 
 /**
@@ -17,10 +18,12 @@ import { messages } from '../../i18n/messages';
  */
 export function Select({ name, label, options, placeholder, required, style }: SelectComponent) {
   const { values, errors, setValue } = useFormContext();
+  const fieldStyles = useFieldStyles();
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState(false);
   const error = errors[name];
   const selected = options.find((option) => option.value === values[name]);
-  const { container, text } = splitStyle(style);
+  const { container, text } = splitStyle(useResolvedStyle(style));
 
   return (
     <View style={fieldStyles.wrapper}>
@@ -66,35 +69,36 @@ export function Select({ name, label, options, placeholder, required, style }: S
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: AppTheme) => ({
   value: {
-    fontSize: theme.fontSize.body,
-    color: theme.colors.text,
+    fontSize: t.fontSize.body,
+    color: t.colors.text,
   },
   placeholder: {
-    color: theme.colors.placeholder,
+    color: t.colors.placeholder,
   },
   overlay: {
     flex: 1,
-    backgroundColor: theme.colors.overlay,
-    justifyContent: 'center',
-    padding: theme.spacing.xl,
+    backgroundColor: t.colors.overlay,
+    justifyContent: 'center' as const,
+    padding: t.spacing.xl,
   },
   sheet: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
-    maxHeight: theme.field.modalMaxHeight,
+    backgroundColor: t.colors.surface,
+    borderRadius: t.radius.md,
+    maxHeight: t.field.modalMaxHeight,
   },
   option: {
-    padding: theme.field.optionPadding,
-    borderBottomWidth: theme.field.borderWidth,
-    borderBottomColor: theme.colors.divider,
+    padding: t.field.optionPadding,
+    borderBottomWidth: t.field.borderWidth,
+    borderBottomColor: t.colors.divider,
   },
   optionText: {
-    fontSize: theme.fontSize.body,
-    fontWeight: theme.fontWeight.regular,
+    fontSize: t.fontSize.body,
+    fontWeight: t.fontWeight.regular,
+    color: t.colors.text,
   },
   optionSelected: {
-    fontWeight: theme.fontWeight.bold,
+    fontWeight: t.fontWeight.bold,
   },
 });
