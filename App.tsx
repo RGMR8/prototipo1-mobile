@@ -70,7 +70,7 @@ export default function App() {
       <NavigationContext.Provider value={navigation}>
         <SafeAreaView style={styles.safeArea}>
           <StatusBar style="auto" />
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             {renderState()}
           </ScrollView>
         </SafeAreaView>
