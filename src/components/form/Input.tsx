@@ -6,6 +6,12 @@ import { useFormContext } from './FormContext';
 import { fieldStyles } from './fieldStyles';
 import { messages } from '../../i18n/messages';
 
+/**
+ * Campo de texto. TextInput acepta a la vez estilo de caja y de texto, así
+ * que el estilo de la API va completo a la caja, encima del estilo base.
+ * El borde de error va al final para que siempre se vea, aunque la API
+ * haya definido otro borderColor.
+ */
 export function Input({ name, inputType, label, placeholder, required, style }: InputComponent) {
   const { values, errors, setValue } = useFormContext();
   const error = errors[name];
@@ -22,7 +28,7 @@ export function Input({ name, inputType, label, placeholder, required, style }: 
         placeholderTextColor={theme.colors.placeholder}
         secureTextEntry={inputType === 'password'}
         autoCapitalize="none"
-        style={[fieldStyles.box, styles.input, error !== undefined && fieldStyles.boxError, mapStyle(style)]}
+        style={[fieldStyles.box, styles.input, mapStyle(style), error !== undefined && fieldStyles.boxError]}
       />
       {error ? <RNText style={fieldStyles.errorText}>{error}</RNText> : null}
     </View>

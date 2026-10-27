@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text as RNText, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import type { SelectComponent } from '../../types/screen';
-import { mapStyle } from '../mapStyle';
+import { mapStyle, splitStyle } from '../mapStyle';
 import { theme } from '../../theme/theme';
 import { useFormContext } from './FormContext';
 import { fieldStyles } from './fieldStyles';
@@ -10,12 +10,17 @@ import { messages } from '../../i18n/messages';
 /**
  * Select multiplataforma hecho con primitivas de RN (sin librerías):
  * funciona igual en web y en el APK, y no requiere módulos nativos.
+ *
+ * Estilo de la API (#5): la parte de contenedor va a la caja y la de texto
+ * al valor elegido. El color del placeholder y el borde de error van al
+ * final para que siempre se distingan.
  */
 export function Select({ name, label, options, placeholder, required, style }: SelectComponent) {
   const { values, errors, setValue } = useFormContext();
   const [open, setOpen] = useState(false);
   const error = errors[name];
   const selected = options.find((option) => option.value === values[name]);
+  const { container, text } = splitStyle(style);
 
   return (
     <View style={fieldStyles.wrapper}>
@@ -25,9 +30,9 @@ export function Select({ name, label, options, placeholder, required, style }: S
 
       <Pressable
         onPress={() => setOpen(true)}
-        style={[fieldStyles.box, error !== undefined && fieldStyles.boxError, mapStyle(style)]}
+        style={[fieldStyles.box, mapStyle(container), error !== undefined && fieldStyles.boxError]}
       >
-        <RNText style={[styles.value, selected === undefined && styles.placeholder]}>
+        <RNText style={[styles.value, mapStyle(text), selected === undefined && styles.placeholder]}>
           {selected ? selected.label : placeholder ?? messages.form.selectPlaceholder}
         </RNText>
       </Pressable>

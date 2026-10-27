@@ -10,6 +10,7 @@ import type {
   MapRegion,
 } from '../types/screen';
 import { isRegisteredFunction } from '../actions/functionRegistry';
+import { checkStyleValue, isStyleKey, STYLE_SPEC } from '../style/styleSpec';
 
 /**
  * Error de parseo. Se define esta clase mínima (no un sistema de manejo
@@ -82,14 +83,29 @@ function optionalBoolean(raw: Record<string, unknown>, field: string, path: stri
   return value;
 }
 
+/**
+ * Valida el estilo de un componente contra el vocabulario de styleSpec (#5).
+ * - Propiedad que la app no conoce: se ignora. El backend puede ir por
+ *   delante del APK instalado, igual que con los componentes Unknown (#4).
+ * - Propiedad conocida con valor inválido: ScreenParseError con la ruta
+ *   exacta. Es un error del backend y debe verse, no esconderse.
+ */
 function parseStyle(raw: unknown, path: string): ComponentStyle | undefined {
   if (raw === undefined) return undefined;
   if (!isPlainObject(raw)) {
     throw new ScreenParseError('El campo "style" debe ser un objeto', path);
   }
-  // Se pasa tal cual: no se valida cada propiedad de estilo
-  // individualmente, solo que la forma general sea un objeto.
-  return raw as ComponentStyle;
+  const style: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isStyleKey(key)) continue;
+    const problem = checkStyleValue(STYLE_SPEC[key], value);
+    if (problem !== null) {
+      throw new ScreenParseError(`"style.${key}" ${problem}`, `${path}.${key}`);
+    }
+    style[key] = value;
+  }
+  // Cada valor pasó por su regla, así que el objeto cumple ComponentStyle.
+  return style as ComponentStyle;
 }
 
 function parseAction(raw: unknown, path: string, ctx: ParseContext): ScreenAction | undefined {

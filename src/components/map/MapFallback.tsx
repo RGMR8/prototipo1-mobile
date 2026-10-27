@@ -1,16 +1,17 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { MapComponent } from '../../types/screen';
 import { messages } from '../../i18n/messages';
+import { mapStyle } from '../mapStyle';
 import { theme } from '../../theme/theme';
 
 /**
  * Representación del Map sin mapa interactivo: muestra el centro y la lista
  * de ubicaciones. Se usa en la web de vista previa, donde la librería de
- * mapas nativa no funciona.
+ * mapas nativa no funciona. El estilo de la API se aplica a la caja.
  */
-export function MapFallback({ height, region, markers }: MapComponent) {
+export function MapFallback({ height, region, markers, style }: MapComponent) {
   return (
-    <View style={[styles.box, { minHeight: height }]}>
+    <View style={[styles.box, mapStyle(style), { minHeight: height }]}>
       <Text style={styles.title}>{messages.map.unavailable}</Text>
       <Text style={styles.secondary}>
         {messages.map.center} {formatCoords(region.latitude, region.longitude)}
@@ -37,23 +38,23 @@ function formatCoords(latitude: number, longitude: number): string {
 
 const styles = StyleSheet.create({
   box: {
-    borderWidth: 1,
-    borderColor: theme.colors.textSecondary,
-    borderRadius: 8,
-    padding: 12,
-    gap: 8,
+    borderWidth: theme.field.borderWidth,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   title: {
     color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.fontSize.subtitle,
+    fontWeight: theme.fontWeight.bold,
   },
   marker: {
-    gap: 2,
+    gap: theme.spacing.xs,
   },
   markerTitle: {
     color: theme.colors.text,
-    fontWeight: '600',
+    fontWeight: theme.fontWeight.bold,
   },
   secondary: {
     color: theme.colors.textSecondary,

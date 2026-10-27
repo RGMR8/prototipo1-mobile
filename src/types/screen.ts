@@ -4,28 +4,62 @@
  * Prototipo #1: Text, Container, Button, estilos básicos.
  * Prototipo #2: Form, FormGroup, Input (text, password), Select,
  *               acciones NAVIGATE y SUBMIT.
- * Personalización de estilos desde la API: Prototipo #5 en espera.
+ * Prototipo #4: Unknown (componente que esta versión no conoce), ttl.
+ * Prototipo #5: estilos completos desde la API y componente Map.
  */
 
 /**
- * Propiedades de estilo que la API puede especificar por componente.
- * Subconjunto deliberadamente pequeño: no busca cubrir cada propiedad
- * CSS posible.
+ * Propiedades de estilo que la API puede especificar por componente (#5).
+ *
+ * Son nombres y valores de React Native, así que se aplican sin traducir.
+ * Cada propiedad tiene su regla de validación en style/styleSpec.ts: si se
+ * agrega una aquí, TypeScript obliga a agregar su regla allá.
  */
+
+/** Ancho o alto: número (dp) o porcentaje como texto, por ejemplo "50%". */
+export type Dimension = number | `${number}%`;
+
 export interface ComponentStyle {
+  // Texto
   color?: string;
-  backgroundColor?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
-  padding?: number;
-  margin?: number;
+  fontStyle?: 'normal' | 'italic';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  lineHeight?: number;
+  textDecorationLine?: 'none' | 'underline' | 'line-through';
+
+  // Fondo y borde
+  backgroundColor?: string;
+  opacity?: number;
+  borderWidth?: number;
+  borderColor?: string;
   borderRadius?: number;
+
+  // Espaciado
+  padding?: number;
+  paddingHorizontal?: number;
+  paddingVertical?: number;
+  margin?: number;
+  marginHorizontal?: number;
+  marginVertical?: number;
+  marginTop?: number;
+  marginBottom?: number;
   gap?: number;
+
+  // Distribución
+  flex?: number;
   flexDirection?: 'row' | 'column';
+  flexWrap?: 'wrap' | 'nowrap';
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
-  justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between';
-  width?: string | number;
-  height?: string | number;
+  alignSelf?: 'auto' | 'flex-start' | 'center' | 'flex-end' | 'stretch';
+  justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+
+  // Tamaño
+  width?: Dimension;
+  height?: Dimension;
+  minHeight?: Dimension;
+  maxWidth?: Dimension;
 }
 
 interface BaseComponent {
@@ -99,7 +133,6 @@ export type ScreenComponent =
   | FormGroupComponent
   | InputComponent
   | SelectComponent
-  | UnknownComponent  
   | UnknownComponent
   | MapComponent;
 
@@ -167,4 +200,3 @@ export interface MapComponent {
   markers: MapMarker[];
   style?: ComponentStyle;
 }
-
