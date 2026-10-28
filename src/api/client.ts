@@ -84,6 +84,17 @@ export async function fetchScreen(screenId: string): Promise<unknown> {
 }
 
 /**
+ * Modo sin conexión: todas las pantallas que el backend marca para usar sin
+ * señal, en una sola respuesta { screens: [...] }. La usa precacheScreens.
+ */
+export async function fetchOfflineScreens(): Promise<unknown> {
+  return request(
+    `${API_BASE_URL}/api/base_movil/index.php?method=pantallas_offline`,
+    { headers: await buildHeaders() }
+  );
+}
+
+/**
  * Envía los valores de un Form al método indicado por la acción SUBMIT.
  * El body va como JSON: en PHP se lee con php://input, no con $_POST.
  */

@@ -2,6 +2,8 @@ import { fetchScreen } from '../api/client';
 import { ApiError } from '../api/apiError';
 import { parseScreen } from '../parser/parseScreen';
 import { getCachedScreen, removeScreen, saveScreen } from '../cache/screenCache';
+import { hasValidSession } from '../session/sessionExpiry';
+import { LOGIN_SCREEN_ID } from '../navigation/constants';
 import type { ScreenDefinition } from '../types/screen';
 
 /**
@@ -14,11 +16,17 @@ import type { ScreenDefinition } from '../types/screen';
  *
  * Los errores en los que el servidor SÍ respondió (401, 404, 500) no se
  * tapan con caché: suben tal cual.
+ *
+ * Modo sin conexión: una pantalla protegida solo se sirve desde caché
+ * mientras la sesión no haya vencido (fecha `exp` del token). Si venció y
+ * no hay red, se trata como un 401: la app cierra la sesión y va a login,
+ * que siempre requiere conexión para entrar.
  */
 export async function loadScreen(screenId: string): Promise<ScreenDefinition> {
   const cached = await getCachedScreen(screenId);
+  const cacheAllowed = screenId === LOGIN_SCREEN_ID || (await hasValidSession());
 
-  if (cached !== null && cached.fresh) {
+  if (cached !== null && cached.fresh && cacheAllowed) {
     const screen = tryParse(cached.raw);
     if (screen !== null) return screen;
     await removeScreen(screenId);
@@ -30,7 +38,10 @@ export async function loadScreen(screenId: string): Promise<ScreenDefinition> {
     await saveScreen(screenId, raw, screen.ttl);
     return screen;
   } catch (error) {
-    if (cached === null || !isConnectivityError(error)) throw error;
+    if (!isConnectivityError(error)) throw error;
+    // Sesión vencida sin conexión: mismo trato que un 401 del servidor.
+    if (!cacheAllowed) throw new ApiError('http', 401);
+    if (cached === null) throw error;
     const stale = tryParse(cached.raw);
     if (stale === null) throw error;
     return stale;

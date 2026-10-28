@@ -10,6 +10,8 @@ import { INITIAL_SCREEN_ID, LOGIN_SCREEN_ID } from './src/navigation/constants';
 import { useScreen } from './src/hooks/useScreen';
 import { ApiError } from './src/api/apiError';
 import { endSession } from './src/session/endSession';
+import { hasValidSession } from './src/session/sessionExpiry';
+import { precacheScreens } from './src/cache/precacheScreens';
 import { errorMessage } from './src/errors/errorMessage';
 import type { AppTheme } from './src/theme/theme';
 import { useTheme, useThemedStyles } from './src/theme/useTheme';
@@ -55,6 +57,14 @@ export default function App() {
     if (!isUnauthorized(state.error)) return;
     endSession().then(() => resetTo(LOGIN_SCREEN_ID));
   }, [state, resetTo]);
+
+  // Al abrir la app con sesión vigente se refresca la precarga del modo sin
+  // conexión. Sin red falla en silencio y queda lo que ya estaba guardado.
+  useEffect(() => {
+    hasValidSession().then((valid) => {
+      if (valid) void precacheScreens();
+    });
+  }, []);
 
   // Botón "atrás" físico de Android. En web es un no-op.
   useEffect(() => {
