@@ -23,11 +23,14 @@ npx expo install --fix      # fix incompatible package versions
 
 Run lint and typecheck before declaring any task done.
 
-## Navigation & Routing
+## Arquitectura de esta app (leer antes de proponer cambios)
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+- **Server-Driven UI.** El backend PHP (`api/base_movil` en el repo de facturación) define las pantallas como JSON; la app las dibuja con un vocabulario fijo de componentes (`src/components/renderComponent.tsx`) y las valida con `src/parser/parseScreen.ts`.
+- **NO usar Expo Router.** La navegación es un stack propio (`App.tsx` + `src/navigation/`) porque las pantallas y las acciones (`NAVIGATE`, `SUBMIT`, `CALL`, `LOGOUT`) vienen del backend. No crear `src/app/`.
+- **El backend decide; la app ejecuta.** Configuración general en `src/config/appConfig.ts` (`getAppConfig()`), estilos en `src/style/styleSpec.ts`. En el dispositivo solo va lo que no puede venir de la API (hardware, configuración de WireGuard).
+- **Un solo `fetch`**: `request()` en `src/api/client.ts`. Toda falla sale como `ApiError`.
+- **Colores** siempre con `useTheme()` / `useThemedStyles()`; `theme.ts` solo tiene tokens.
+- **Variantes:** `app.config.js` con `APP_VARIANT=development` (paquete `.dev`). No existe `app.json`.
 
 ## Building with EAS
 

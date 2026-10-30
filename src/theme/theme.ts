@@ -9,9 +9,14 @@
  * del modo del teléfono. Lo demás (espaciados, tipografía…) no cambia con
  * el modo y se puede usar directo desde `theme`.
  *
+ * #6: los colores de marca (primary, onPrimary) son de cada proyecto y
+ * vienen de src/project/brand.ts. El resto de la paleta es de la base.
+ *
  * Los estilos que manda el backend (campo `style` del JSON) se aplican
  * encima de estos estilos base y los sobrescriben.
  */
+
+import { brand } from '../project/brand';
 
 export type ColorScheme = 'light' | 'dark';
 
@@ -38,8 +43,8 @@ export const lightColors: ThemeColors = {
   border: '#CCCCCC',
   divider: '#EEEEEE',
   error: '#D32F2F',
-  primary: '#22A45D',
-  onPrimary: '#FFFFFF',
+  primary: brand.light.primary,
+  onPrimary: brand.light.onPrimary,
   overlay: 'rgba(0, 0, 0, 0.4)',
 };
 
@@ -52,8 +57,8 @@ export const darkColors: ThemeColors = {
   border: '#3D3D3D',
   divider: '#2A2A2A',
   error: '#EF5350',
-  primary: '#22A45D',
-  onPrimary: '#FFFFFF',
+  primary: brand.dark.primary,
+  onPrimary: brand.dark.onPrimary,
   overlay: 'rgba(0, 0, 0, 0.6)',
 };
 

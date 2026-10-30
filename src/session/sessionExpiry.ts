@@ -1,35 +1,63 @@
 import { getToken } from './tokenStorage';
+import { getLastServerTime } from './serverClock';
 
 /**
  * Vigencia de la sesión leída del propio token (#5, modo sin conexión).
  *
- * El token es un JWT: su parte central (payload) trae `exp`, la fecha de
- * vencimiento en segundos. La app NO valida la firma (eso solo lo puede
- * hacer el servidor, que tiene la clave); solo lee la fecha para no seguir
- * mostrando pantallas guardadas sin conexión cuando la sesión ya venció.
+ * El token es un JWT: su parte central (payload) trae `exp` (vencimiento)
+ * e `iat` (emisión), en segundos. La app NO valida la firma (eso solo lo
+ * puede hacer el servidor, que tiene la clave); solo lee las fechas para no
+ * seguir mostrando pantallas guardadas sin conexión cuando la sesión venció.
  *
- * Límite conocido: depende del reloj del teléfono. Con conexión, el
- * servidor siempre tiene la última palabra (responde 401).
+ * #6: reloj atrasado. Si el teléfono marca una hora anterior a la última
+ * hora conocida del servidor (respuestas o `iat` del token), el reloj fue
+ * atrasado y la sesión se trata como vencida. Se da un margen para
+ * diferencias normales de reloj.
+ *
+ * Con conexión, el servidor siempre tiene la última palabra (responde 401).
  */
+const CLOCK_TOLERANCE_MS = 5 * 60 * 1000;
+
 export async function hasValidSession(): Promise<boolean> {
   const token = await getToken();
   if (token === null) return false;
-  const expiresAt = tokenExpiresAt(token);
+
+  const claims = tokenClaims(token);
+  const now = Date.now();
+
+  const issuedAt = claims?.iat ?? 0;
+  const lastServerTime = Math.max(await getLastServerTime(), issuedAt);
+  if (now < lastServerTime - CLOCK_TOLERANCE_MS) return false;
+
   // Si no se puede leer la fecha, decide el servidor cuando haya conexión.
-  if (expiresAt === null) return true;
-  return Date.now() < expiresAt;
+  if (claims?.exp === undefined) return true;
+  return now < claims.exp;
 }
 
 /** Fecha de vencimiento del token en milisegundos, o null si no se puede leer. */
 export function tokenExpiresAt(token: string): number | null {
+  return tokenClaims(token)?.exp ?? null;
+}
+
+interface TokenTimes {
+  /** Vencimiento en ms. */
+  exp?: number;
+  /** Emisión en ms. */
+  iat?: number;
+}
+
+/** Fechas del payload del JWT en milisegundos, o null si el token no se puede leer. */
+function tokenClaims(token: string): TokenTimes | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
   try {
     const payload: unknown = JSON.parse(decodeBase64Url(parts[1]));
     if (typeof payload !== 'object' || payload === null) return null;
-    const exp = (payload as Record<string, unknown>).exp;
-    if (typeof exp !== 'number') return null;
-    return exp * 1000;
+    const { exp, iat } = payload as Record<string, unknown>;
+    return {
+      exp: typeof exp === 'number' ? exp * 1000 : undefined,
+      iat: typeof iat === 'number' ? iat * 1000 : undefined,
+    };
   } catch {
     return null;
   }

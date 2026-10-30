@@ -6,7 +6,8 @@ import { ScreenRenderer } from './src/components/ScreenRenderer';
 import { ErrorScreen } from './src/components/ErrorScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { NavigationContext } from './src/navigation/NavigationContext';
-import { INITIAL_SCREEN_ID, LOGIN_SCREEN_ID } from './src/navigation/constants';
+import { LOGIN_SCREEN_ID } from './src/navigation/constants';
+import { getAppConfig, initAppConfig } from './src/config/appConfig';
 import { useScreen } from './src/hooks/useScreen';
 import { ApiError } from './src/api/apiError';
 import { endSession } from './src/session/endSession';
@@ -30,13 +31,44 @@ function isUnauthorized(error: unknown): boolean {
   return error instanceof ApiError && error.isUnauthorized;
 }
 
+/**
+ * Arranque (#6): primero la configuración del backend (de lo guardado, o
+ * del servidor la primera vez) y después la navegación, porque de ella sale
+ * la pantalla inicial. initAppConfig nunca lanza ni bloquea: sin red usa lo
+ * guardado o los valores por defecto.
+ */
 export default function App() {
-  const nextKey = useRef(1);
   const { scheme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const [configReady, setConfigReady] = useState(false);
+
+  useEffect(() => {
+    void initAppConfig().finally(() => setConfigReady(true));
+  }, []);
+
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Iconos de la barra de estado en contraste con el fondo del tema. */}
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        {configReady ? (
+          <AppNavigator />
+        ) : (
+          <Text style={[styles.loading, styles.boot]}>{messages.common.loading}</Text>
+        )}
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
+}
+
+function AppNavigator() {
+  const nextKey = useRef(1);
   const styles = useThemedStyles(makeStyles);
 
   // Stack de navegación: la última entrada es la pantalla visible.
-  const [stack, setStack] = useState<StackEntry[]>([{ screenId: INITIAL_SCREEN_ID, key: 0 }]);
+  const [stack, setStack] = useState<StackEntry[]>(() => [
+    { screenId: getAppConfig().initialScreenId, key: 0 },
+  ]);
   const current = stack[stack.length - 1];
   const { state, retry } = useScreen(current.screenId, current.key);
 
@@ -79,17 +111,11 @@ export default function App() {
   const navigation = useMemo(() => ({ navigate, resetTo }), [navigate, resetTo]);
 
   return (
-    <SafeAreaProvider>
-      <NavigationContext.Provider value={navigation}>
-        <SafeAreaView style={styles.safeArea}>
-          {/* Iconos de la barra de estado en contraste con el fondo del tema. */}
-          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            {renderState()}
-          </ScrollView>
-        </SafeAreaView>
-      </NavigationContext.Provider>
-    </SafeAreaProvider>
+    <NavigationContext.Provider value={navigation}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {renderState()}
+      </ScrollView>
+    </NavigationContext.Provider>
   );
 
   function renderState() {
@@ -123,5 +149,8 @@ const makeStyles = (t: AppTheme) => ({
   },
   loading: {
     color: t.colors.textSecondary,
+  },
+  boot: {
+    padding: t.spacing.lg,
   },
 });

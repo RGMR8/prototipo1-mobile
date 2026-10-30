@@ -7,6 +7,7 @@ import { saveToken } from '../session/tokenStorage';
 import { endSession } from '../session/endSession';
 import { LOGIN_SCREEN_ID } from '../navigation/constants';
 import { precacheScreens } from '../cache/precacheScreens';
+import { refreshAppConfig } from '../config/appConfig';
 
 export interface ActionDeps {
   navigate: (screenId: string) => void;
@@ -64,14 +65,16 @@ export async function executeAction(action: ScreenAction, deps: ActionDeps): Pro
 
 /**
  * Aplica la respuesta del servidor en orden:
- * 1. session → guarda el token (login) y lanza en segundo plano la precarga
- *    de pantallas para el modo sin conexión (no se espera: no frena el login).
+ * 1. session → guarda el token (login) y lanza en segundo plano el refresco
+ *    de la configuración (#6) y la precarga de pantallas para el modo sin
+ *    conexión. La precarga espera a la configuración; ninguna frena el login.
  * 2. errors  → los pinta en el Form y se detiene (no navega).
  * 3. action  → la ejecuta (el parser solo permite NAVIGATE, CALL o LOGOUT).
  */
 async function applyResponse(response: SubmitResponse, deps: ActionDeps): Promise<void> {
   if (response.session !== undefined) {
     await saveToken(response.session.token);
+    void refreshAppConfig();
     void precacheScreens();
   }
 

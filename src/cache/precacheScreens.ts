@@ -1,6 +1,7 @@
 import { fetchOfflineScreens } from '../api/client';
 import { parseScreen } from '../parser/parseScreen';
 import { getToken } from '../session/tokenStorage';
+import { getAppConfig, waitForConfigRefresh } from '../config/configStore';
 import { saveScreen } from './screenCache';
 
 /**
@@ -11,10 +12,17 @@ import { saveScreen } from './screenCache';
  * guarda en el caché de siempre, cada una con su ttl. Así, si el usuario
  * inicia sesión y apaga los datos, puede abrir pantallas que no visitó.
  *
+ * #6: el backend la puede apagar con `offlinePrecache` (proyectos que no
+ * trabajan sin conexión no descargan pantallas de más).
+ *
  * Es de mejor esfuerzo: nunca lanza. Si falla, la app sigue igual que antes
  * y las pantallas se piden una por una al abrirlas.
  */
 export async function precacheScreens(): Promise<void> {
+  // Si se está refrescando la configuración (arranque o login), se espera
+  // para decidir con el valor nuevo de offlinePrecache.
+  await waitForConfigRefresh();
+  if (!getAppConfig().offlinePrecache) return;
   try {
     const tokenAtStart = await getToken();
     if (tokenAtStart === null) return;

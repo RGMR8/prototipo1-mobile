@@ -6,15 +6,14 @@
  * respuesta inválida). Nunca se devuelve un cuerpo de error como si fuera éxito.
  */
 import { getToken } from '../session/tokenStorage';
+import { recordServerTime } from '../session/serverClock';
+import { getAppConfig } from '../config/appConfig';
 import { ApiError } from './apiError';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 if (!API_BASE_URL) {
   throw new Error('Falta EXPO_PUBLIC_API_BASE_URL en el .env');
 }
-
-/** Tiempo máximo de espera por petición. Con mala señal, mejor un error claro que una espera infinita. */
-const REQUEST_TIMEOUT_MS = 15000;
 
 /**
  * Cabeceras comunes de toda petición. Agrega el token si existe:
@@ -53,11 +52,14 @@ function serverMessage(body: unknown): string | undefined {
  * timeout (AbortController), sin red, código HTTP de error o cuerpo inválido.
  */
 async function request(url: string, init: RequestInit): Promise<unknown> {
+  // Tiempo máximo de espera (#6: lo define el backend). Con mala señal,
+  // mejor un error claro que una espera infinita.
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), getAppConfig().requestTimeoutMs);
 
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
+    recordServerTime(response.headers.get('date'));
     const body = await readJson(response);
 
     if (!response.ok) {
@@ -79,6 +81,14 @@ async function request(url: string, init: RequestInit): Promise<unknown> {
 export async function fetchScreen(screenId: string): Promise<unknown> {
   return request(
     `${API_BASE_URL}/api/base_movil/index.php?method=obten_pantalla&screenId=${encodeURIComponent(screenId)}`,
+    { headers: await buildHeaders() }
+  );
+}
+
+/** Configuración general de la app (#6). Pública: se pide antes del login. */
+export async function fetchAppConfig(): Promise<unknown> {
+  return request(
+    `${API_BASE_URL}/api/base_movil/index.php?method=configuracion_app`,
     { headers: await buildHeaders() }
   );
 }
